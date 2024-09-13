@@ -3,6 +3,10 @@ from operator import index
 
 
 class Board:
+    """Used to edit the board, get legal moves, and other associated proccessess.
+    Terms:
+    Notation: A string used to represent a square in chess
+    Index: Typically used to represent the acutal location of a square's information"""
     import random, math
     def __init__(self):
         self.board = [["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"],
@@ -37,10 +41,12 @@ class Board:
     
     
     def get_notation_via_index(self, index):
+        """Returns the notation based off an index"""
         return self.board_notation[index[0]][index[1]]
 
 
     def if_contains(self, item, search):
+        """Returns True if a list contains a value, otherwise returns False."""
         for i in range(len(search)):
             try:
                 item.index(search[i])
@@ -51,19 +57,18 @@ class Board:
     
     
     def get_index_via_notation(self, notation):
+        """Returns the index based off a notation."""
         return (int(notation[1]) - 1, self.board_notation[int(notation[1]) - 1].index(notation))
 
 
     def get_square_value(self, notation):
+        "Returns the value of a square based off a notation. The data will be returned in a tuple consisting of 1st: the piece on that square, and 2nd: the piece's color."
         return (self.board[self.get_index_via_notation(notation)[0]][self.get_index_via_notation(notation)[1]],
                 self.board_color[self.get_index_via_notation(notation)[0]][self.get_index_via_notation(notation)[1]])
 
 
-    def bundled_or(self, argument_a, argument_b):
-        return argument_a or argument_b
-
-
     def if_white_can_enpessant_this_move(self):
+        """Returns True if there is a black pawn that has advanced two squares, otherwise returns False"""
         if len(self.player_moves) == 0:
             return None
         last_moved_piece = self.board[self.get_index_via_notation(self.player_moves[-1][2:4])[0]][self.get_index_via_notation(self.player_moves[-1][2:4])[1]]
@@ -74,17 +79,15 @@ class Board:
 
 
     def if_black_can_enpessant_this_move(self):
+        """Returns True if there is a white pawn that has advanced two squares, otherwise returns False."""
         if self.board[self.get_index_via_notation(self.player_moves[-1][2:4])[0]][self.get_index_via_notation(self.player_moves[-1][2:4])[1]] == "Pawn" and self.player_moves[-1][1] == "2" and self.player_moves[-1][3] == "4":
             return True
         else:
             return False
 
-
-    def multi_append(self, list, items_to_be_appended):
-        return (list, items_to_be_appended)
-
     
     def clear_square(self, notation):
+        """Removes all data from a square based off notation."""
         if type(notation) == str:
             notation = [notation]
         for i in range(len(notation)):
@@ -94,6 +97,7 @@ class Board:
 
 
     def move(self, move):
+        """Performs ANY move (Copys the contents of one square to another, and clears the first squares data), also updates castling rights if a rook or king has moved."""
         # Defining variables
         index1 = self.get_index_via_notation(move[0:2])
         index2 = self.get_index_via_notation(move[2:4])
@@ -125,24 +129,10 @@ class Board:
         self.board_color[index2[0]][index2[1]] = self.board_color[index1[0]][index1[1]]
         self.clear_square(move[0:2])
         self.player_moves.append(move)
-
-    
-    def square_empty(self, notation):
-        if self.get_square_value(notation) == (None, None):
-            return True
-        else:
-            return False
-    
-    
-    def squares_empty(self, notations):
-        true = True
-        for i in range(len(self, notations)):
-            if self.get_square_value(notations[i]) != (None, None) and true:
-                true = False
-        return true
     
     
     def get_seeing_as_bishop_at(self, notation):
+        """Returns all squares that a bishop would see (all squares it can move to, plus any that it protects) at the passed in square (notation)."""
         # Defining variables
         index = self.get_index_via_notation(notation)
         moves = []
@@ -196,6 +186,7 @@ class Board:
 
 
     def errorless_index(self, list_0, index_0):
+        """Performs the same action as '.index', but instead of returning an error if an item is not found, it will instead return none."""
         try:
             return list_0.index(index_0)
         except:
@@ -203,6 +194,7 @@ class Board:
     
     
     def get_seeing_as_pawn_at(self, notation):
+        """Returns all squares a pawn can see (any square it protects)."""
         # Defining variables
         index = self.get_index_via_notation(notation)
         piece_color = self.get_square_value(notation)[1]
@@ -227,23 +219,8 @@ class Board:
         return moves
 
 
-    def check_if_squares_legal(self, list_of_squares):
-        moves = list_of_squares
-        i2 = 0
-        for i in range(len(moves)):
-            if self.if_contains(moves[i], ("a", "b", "c", "d", "e", "f", "g", "h")):
-                moves[i] = self.get_index_via_notation(moves[i])
-        for i in range(len(moves)):
-            if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7:
-                del moves[i2]
-                i2 -= 1
-            i2 += 1
-        for i in range(len(moves)):
-            moves[i] = self.get_notation_via_index(moves[i])
-        return moves
-
-
     def get_legal_as_pawn_at(self, notation):
+        """Returns all possible legal moves a pawn could make from a square (the passed in notation)."""
         # Defining variables
         index = self.get_index_via_notation(notation)
         piece_color = self.get_square_value(notation)[1]
@@ -306,6 +283,7 @@ class Board:
     
     
     def get_seeing_as_knight_at(self, notation):
+        """Returns all legal squares a knight could move to from a certain square (The passed in notation)."""
         # Defining variables
         index = self.get_index_via_notation(notation)
         moves = []
@@ -328,6 +306,7 @@ class Board:
             moves[i] = self.get_notation_via_index(moves[i])
         return moves
     def get_seeing_as_king(self, notation):
+        """Returns all squares a king protects from a certain square (the passed in notation)."""
         # Defining variables
         moves = []
         index = self.get_index_via_notation(notation)
@@ -352,6 +331,7 @@ class Board:
 
 
     def get_legal_as_king(self, notation):
+        """Returns all possible legal moves as a king from a certain square (the passed in notation)."""
         # Getting all "typical" (moving to all adjacent squares) king moves
         moves = [*self.get_seeing_as_king(notation)]
         # Castling
@@ -371,6 +351,7 @@ class Board:
     
     
     def get_piece_seeing(self, notation):
+        """Checks the value of square (gotten from notation), then gets what that piece sees (via checking the value of the square, then running that piece's respective function to get what it sees)."""
         index = self.get_index_via_notation(notation)
         piece = self.get_square_value(notation)[0]
         piece_color = self.board_color[index[0]][index[1]]
@@ -401,6 +382,7 @@ class Board:
 
 
     def get_pieces_seeing(self, notation):
+        """Returns the squares off all pieces seeing a certain square (the square in question is gotten from notation)"""
         pieces_locations = []
         for i in range(64):
             if self.board[math.floor(i / 8)][i % 8] != None:
@@ -412,6 +394,7 @@ class Board:
 
 
     def get_legal_moves(self, notation):
+        """Returns all legal moves of a piece on a specific square (gotten via notation) (The moves are obtained by either getting what squares a piece sees, then vetting all the moves to remove the squares it cannot move to. Or uses the respective function to calculate that piece's legal moves)."""
         piece = self.get_square_value(notation)[0]
         if piece == "Pawn":
             moves = [*self.get_legal_as_pawn_at(notation)]
@@ -435,24 +418,14 @@ class Board:
 
 
     def who_to_move(self):
+        """Returns a string containing either 'white' or 'black' based off which player's turn it is to move."""
         if len(self.player_moves) == 0:
             return "white"
         return self.get_square_value(self.player_moves[-1][2:4])
-    
-    
-    def get_square_seen_by(self, notation):
-        seeing = []
-        index = self.get_index_via_notation(self.notation)
-        for a in range(len(self.board)):
-            for b in range(len(self.board[a])):
-                try:
-                    if self.board[a][b] is not None:
-                        if self.get_piece_seeing(self.get_notation_via_index((a, b))).index(notation) is not None:
-                            seeing.append(self.board_notation[a][b])
-                except:
-                    pass
-        return seeing
+
+
     def legal_move(self, move):
+        """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
         if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2]) != self.who_to_move():
             self.move(move)
             return True
