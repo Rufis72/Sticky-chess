@@ -1,2 +1,2 @@
-ex = [[11, 12, 13], [21, 22, 23], [31, 32, 33]]
-print(ex[2].index(11))
+import random
+print(random.randint(1, 9))
