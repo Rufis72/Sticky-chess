@@ -1,5 +1,8 @@
 import math
+import time
 from operator import index
+
+from pygame.examples.scrap_clipboard import screen
 
 
 class Board:
@@ -38,6 +41,10 @@ class Board:
         self.white_ooo = True
         self.black_oo = True
         self.black_ooo = True
+
+
+    def set_position_via_fen(self, fen):
+        pass
     
     
     def get_notation_via_index(self, index):
@@ -80,6 +87,8 @@ class Board:
 
     def if_black_can_enpessant_this_move(self):
         """Returns True if there is a white pawn that has advanced two squares, otherwise returns False."""
+        if len(self.player_moves) == 0:
+            return None
         if self.board[self.get_index_via_notation(self.player_moves[-1][2:4])[0]][self.get_index_via_notation(self.player_moves[-1][2:4])[1]] == "Pawn" and self.player_moves[-1][1] == "2" and self.player_moves[-1][3] == "4":
             return True
         else:
@@ -426,7 +435,58 @@ class Board:
 
     def legal_move(self, move):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
-        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2]) != self.who_to_move():
+        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2]) == self.who_to_move():
             self.move(move)
             return True
         return False
+class Display:
+    import pygame, math
+    def __init__(self, square_one_color = (160, 82, 45), square_two_color = (255, 255, 255), screen_size = (700, 700), background = (0, 0, 0)):
+        self.square_one_color = square_one_color
+        self.square_two_color = square_two_color
+        self.screen_size = screen_size
+        self.background = background
+        self.frame = 0
+        self.drawn_background_squares = []
+        pygame.init()
+        pygame.display.init()
+        self.screen = pygame.display.set_mode(screen_size)
+        self.square_spacing_size = (screen_size[0] / 9) / 7
+        self.square_edge_size = (screen_size[0] / 9) - ((self.square_spacing_size * 2)) / 8
+    def draw_backround(self, background = "Nothing entered"):
+        import pygame
+        if background == "Nothing entered":
+            background = self.background
+        pygame.draw.rect(self.screen, background, pygame.Rect(0, 0, self.screen_size[0], self.screen_size[1]))
+    def setup_background_squares(self):
+        color_alternation = 0
+        for i in range(64):
+            if i % 8 == 0:
+                color_alternation = (color_alternation + 1) % 2
+            color_alternation = (color_alternation + 1) % 2
+            if color_alternation == 0:
+                self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_one_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, self.square_edge_size, self.square_edge_size)))
+            else:
+                self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, self.square_edge_size, self.square_edge_size)))
+    def draw_pieces(self, board):
+        for i in range(len(board.board)):
+            for n in range(len(board.board)):
+                screen.blit()
+    def update_screen(self):
+        import pygame
+        self.draw_backround()
+        self.setup_background_squares()
+        pygame.display.flip()
+
+
+
+display_ex = Display()
+example = Board()
+display_ex.update_screen()
+import pygame
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
