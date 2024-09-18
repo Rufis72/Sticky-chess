@@ -1,9 +1,5 @@
 import math
 import time
-from operator import index
-
-from pygame.examples.scrap_clipboard import screen
-
 
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
@@ -442,6 +438,7 @@ class Board:
 class Display:
     import pygame, math
     def __init__(self, square_one_color = (160, 82, 45), square_two_color = (255, 255, 255), screen_size = (700, 700), background = (0, 0, 0)):
+        import pygame
         self.square_one_color = square_one_color
         self.square_two_color = square_two_color
         self.screen_size = screen_size
@@ -453,12 +450,26 @@ class Display:
         self.screen = pygame.display.set_mode(screen_size)
         self.square_spacing_size = (screen_size[0] / 9) / 7
         self.square_edge_size = (screen_size[0] / 9) - ((self.square_spacing_size * 2)) / 8
-    def draw_backround(self, background = "Nothing entered"):
+        pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size))
+        self.piece_locations = {"black Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size)),
+                                "black Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkBishop.png"), (self.square_edge_size, self.square_edge_size)),
+                                "black Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKnight.png"), (self.square_edge_size, self.square_edge_size)),
+                                "black Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkRook.png"), (self.square_edge_size, self.square_edge_size)),
+                                "black King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKing.png"), (self.square_edge_size, self.square_edge_size)),
+                                "black Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkQueen.png"), (self.square_edge_size, self.square_edge_size)),
+                                "white Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightPawn.png"), (self.square_edge_size, self.square_edge_size)),
+                                "white Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKnight.png"), (self.square_edge_size, self.square_edge_size)),
+                                "white Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightBishop.png"), (self.square_edge_size, self.square_edge_size)),
+                                "white Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightRook.png"), (self.square_edge_size, self.square_edge_size)),
+                                "white King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKing.png"), (self.square_edge_size, self.square_edge_size)),
+                                "white Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightQueen.png"), (self.square_edge_size, self.square_edge_size))}
+    def draw_background(self, background = "Nothing entered"):
         import pygame
         if background == "Nothing entered":
             background = self.background
         pygame.draw.rect(self.screen, background, pygame.Rect(0, 0, self.screen_size[0], self.screen_size[1]))
     def setup_background_squares(self):
+        import pygame
         color_alternation = 0
         for i in range(64):
             if i % 8 == 0:
@@ -468,25 +479,38 @@ class Display:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_one_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, self.square_edge_size, self.square_edge_size)))
             else:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, self.square_edge_size, self.square_edge_size)))
-    def draw_pieces(self, board):
-        for i in range(len(board.board)):
-            for n in range(len(board.board)):
-                screen.blit()
-    def update_screen(self):
+    def draw_pieces(self, board_class):
         import pygame
-        self.draw_backround()
+        for i in range(8):
+            for n in range(8):
+                try:
+                    print(board_class.board_color[i][n] + " " + board_class.board[i][n])
+                    self.screen.blit(self.piece_locations.get(board_class.board_color[i][n] + " " + board_class.board[i][n]), ((n * (self.square_edge_size + self.square_spacing_size)) + self.square_spacing_size, (i * (self.square_edge_size + self.square_spacing_size)) + self.square_spacing_size))
+                except:
+                    pass
+    def update_screen(self, board):
+        import pygame
+        self.draw_background()
         self.setup_background_squares()
+        self.draw_pieces(board)
         pygame.display.flip()
 
 
 
 display_ex = Display()
 example = Board()
-display_ex.update_screen()
+display_ex.update_screen(example)
 import pygame
+times = []
+previous_time = 0
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+    previous_time = time.time()
+    display_ex.update_screen(example)
+    times.append(time.time() - previous_time)
+print(times)
+
 
