@@ -449,8 +449,21 @@ class Display:
         pygame.init()
         pygame.display.init()
         self.screen = pygame.display.set_mode(screen_size)
-        self.square_spacing_size = (screen_size[0] / 9) / 7
-        self.square_edge_size = (screen_size[0] / 9) - ((self.square_spacing_size * 2)) / 8
+        if self.screen_size[0] == screen_size[1]:
+            self.square_spacing_size = (screen_size[0] / 9) / 7
+            self.board_offset_x = self.square_spacing_size
+            self.board_offset_y = self.square_spacing_size
+            self.square_edge_size = (screen_size[0] / 9) - ((self.square_spacing_size * 2)) / 8
+        elif self.screen_size[0] > self.screen_size[1]:
+            self.square_spacing_size = (screen_size[1] / 9) / 7
+            self.board_offset_x = self.square_spacing_size - (self.screen_size[1] - self.screen_size[0]) / 2
+            self.board_offset_y = self.square_spacing_size
+            self.square_edge_size = (screen_size[1] / 9) - ((self.square_spacing_size * 2)) / 8
+        else:
+            self.square_spacing_size = (screen_size[0] / 9) / 7
+            self.board_offset_x = self.square_spacing_size
+            self.board_offset_y = self.square_spacing_size - (self.screen_size[0] - self.screen_size[1]) / 2
+            self.square_edge_size = (screen_size[0] / 9) - ((self.square_spacing_size * 2)) / 8
         pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size))
         self.piece_locations = {"black Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size)),
                                 "black Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkBishop.png"), (self.square_edge_size, self.square_edge_size)),
@@ -477,9 +490,9 @@ class Display:
                 color_alternation = (color_alternation + 1) % 2
             color_alternation = (color_alternation + 1) % 2
             if color_alternation == 0:
-                self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_one_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, self.square_edge_size, self.square_edge_size)))
+                self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_one_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size)))
             else:
-                self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, self.square_edge_size, self.square_edge_size)))
+                self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size)))
     def draw_pieces(self, board_class, whites_point_of_view = True):
         import pygame
         if whites_point_of_view:
@@ -488,7 +501,7 @@ class Display:
         for i in range(8):
             for n in range(8):
                 try:
-                    self.screen.blit(self.piece_locations.get(board_class.board_color[i][n] + " " + board_class.board[i][n]), ((n * (self.square_edge_size + self.square_spacing_size)) + self.square_spacing_size, (i * (self.square_edge_size + self.square_spacing_size)) + self.square_spacing_size))
+                    self.screen.blit(self.piece_locations.get(board_class.board_color[i][n] + " " + board_class.board[i][n]), ((n * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_x, (i * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_y))
                 except:
                     pass
         if whites_point_of_view:
@@ -503,7 +516,7 @@ class Display:
 
 
 
-display_ex = Display()
+display_ex = Display(screen_size=(497, 268))
 example = Board()
 display_ex.update_screen(example)
 import pygame
@@ -516,7 +529,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     if time.time() - timestart > 3:
-        print(example.legal_move("e2e4"))
+        example.legal_move("e2e4")
     previous_time = time.time()
     display_ex.update_screen(example)
     times.append(time.time() - previous_time)
