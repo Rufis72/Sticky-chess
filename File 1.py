@@ -431,14 +431,15 @@ class Board:
 
     def legal_move(self, move):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
-        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2]) == self.who_to_move():
+        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
             self.move(move)
             return True
         return False
 class Display:
     import pygame, math
-    def __init__(self, square_one_color = (160, 82, 45), square_two_color = (255, 255, 255), screen_size = (700, 700), background = (0, 0, 0)):
+    def __init__(self, square_one_color = (160, 82, 45), square_two_color = (255, 255, 255), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True):
         import pygame
+        self.view_from_whites_perspective = if_view_from_whites_perspective
         self.square_one_color = square_one_color
         self.square_two_color = square_two_color
         self.screen_size = screen_size
@@ -479,20 +480,25 @@ class Display:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_one_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, self.square_edge_size, self.square_edge_size)))
             else:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.square_spacing_size, self.square_edge_size, self.square_edge_size)))
-    def draw_pieces(self, board_class):
+    def draw_pieces(self, board_class, whites_point_of_view = True):
         import pygame
+        if whites_point_of_view:
+            board_class.board_color.reverse()
+            board_class.board.reverse()
         for i in range(8):
             for n in range(8):
                 try:
-                    print(board_class.board_color[i][n] + " " + board_class.board[i][n])
                     self.screen.blit(self.piece_locations.get(board_class.board_color[i][n] + " " + board_class.board[i][n]), ((n * (self.square_edge_size + self.square_spacing_size)) + self.square_spacing_size, (i * (self.square_edge_size + self.square_spacing_size)) + self.square_spacing_size))
                 except:
                     pass
+        if whites_point_of_view:
+            board_class.board_color.reverse()
+            board_class.board.reverse()
     def update_screen(self, board):
         import pygame
         self.draw_background()
         self.setup_background_squares()
-        self.draw_pieces(board)
+        self.draw_pieces(board, self.view_from_whites_perspective)
         pygame.display.flip()
 
 
@@ -504,13 +510,20 @@ import pygame
 times = []
 previous_time = 0
 running = True
+timestart = time.time()
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+    if time.time() - timestart > 3:
+        print(example.legal_move("e2e4"))
     previous_time = time.time()
     display_ex.update_screen(example)
     times.append(time.time() - previous_time)
-print(times)
+average = 0
+for i in range(len(times)):
+    average += times[i]
+average /= len(times)
+print(f"the average frame time was {average}")
 
 
