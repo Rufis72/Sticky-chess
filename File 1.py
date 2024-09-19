@@ -515,28 +515,3 @@ class Display:
         pygame.display.flip()
 
 
-
-display_ex = Display(screen_size=(497, 268))
-example = Board()
-display_ex.update_screen(example)
-import pygame
-times = []
-previous_time = 0
-running = True
-timestart = time.time()
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    if time.time() - timestart > 3:
-        example.legal_move("e2e4")
-    previous_time = time.time()
-    display_ex.update_screen(example)
-    times.append(time.time() - previous_time)
-average = 0
-for i in range(len(times)):
-    average += times[i]
-average /= len(times)
-print(f"the average frame time was {average}")
-
-
