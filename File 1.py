@@ -1,6 +1,8 @@
 import math
 import time
 
+# TODO: add get_seeing_as_rook_at and get_seeing_as_queen_at, also finish set_position_via_fen, add a section to recognise en pessant to legal_move(), error with advancing a pawn one square
+
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
     Terms:
@@ -294,12 +296,12 @@ class Board:
         moves = []
         moves.append((index[0] - 1, index[1] - 2))
         moves.append((index[0] - 1, index[1] + 2))
-        moves.append((index[0] - 2, index[1] - 1))
-        moves.append((index[0] + 2, index[1] - 1))
-        moves.append((index[0] - 2, index[1] + 1))
-        moves.append((index[0] + 2, index[1] + 1))
-        moves.append((index[0] - 1, index[1] + 2))
+        moves.append((index[0] + 1, index[1] - 2))
         moves.append((index[0] + 1, index[1] + 2))
+        moves.append((index[0] - 2, index[1] - 1))
+        moves.append((index[0] - 2, index[1] + 1))
+        moves.append((index[0] + 2, index[1] - 1))
+        moves.append((index[0] + 2, index[1] + 1))
         # Checking if any squares are "illegal"
         i2 = 0
         for i in range(len(moves)):
@@ -383,6 +385,8 @@ class Board:
                 del moves[i2]
                 i2 -= 1
             i2 += 1
+        for i in range(len(moves)):
+            moves[i] = self.get_notation_via_index(moves[i])
         return moves
 
 
@@ -413,7 +417,7 @@ class Board:
         # Checking if any squares are "illegal"
         i2 = 0
         for i in range(len(moves)):
-            if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7 or self.get_square_value(notation)[1] == self.board_color[moves[i][0]][moves[i][1]]:
+            if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7 or self.get_square_value(notation)[1] == self.board_color[moves[i2][0]][moves[i2][1]]:
                 del moves[i2]
                 i2 -= 1
             i2 += 1
@@ -432,10 +436,18 @@ class Board:
 
     def legal_move(self, move):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
-        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) == 1 and self.get_square_value(move[0:2])[1] == self.who_to_move():
+        print(self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]))
+        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
             self.move(move)
             return True
         return False
+
+
+    def legal_moves(self, moves):
+        returning = []
+        for i in range(len(moves)):
+            returning.append(self.legal_move(moves[i]))
+        return returning
 class Display:
     import pygame, math
     def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 15):
@@ -557,6 +569,7 @@ class Display:
             self.update_screen(board_class)
 boardy = Board()
 displaye = Display(grid_lines_size= 0)
+boardy.legal_moves(["e2e4", "e7e5", "g1f3", "b8c6", "f1c4"])
 displaye.update_screen(boardy)
 displaye.quittable(boardy)
 
