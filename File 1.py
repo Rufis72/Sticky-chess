@@ -134,7 +134,7 @@ class Board:
         self.board_color[index2[0]][index2[1]] = self.board_color[index1[0]][index1[1]]
         self.clear_square(move[0:2])
         self.player_moves.append(move)
-    
+
     
     def get_seeing_as_bishop_at(self, notation):
         """Returns all squares that a bishop would see (all squares it can move to, plus any that it protects) at the passed in square (notation)."""
@@ -424,20 +424,21 @@ class Board:
 
     def who_to_move(self):
         """Returns a string containing either 'white' or 'black' based off which player's turn it is to move."""
-        if len(self.player_moves) == 0:
+        if len(self.player_moves) == 0 or self.get_square_value(self.player_moves[-1][2:4])[1] == "black":
             return "white"
-        return self.get_square_value(self.player_moves[-1][2:4])
+        else:
+            return "black"
 
 
     def legal_move(self, move):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
-        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
+        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) == 1 and self.get_square_value(move[0:2])[1] == self.who_to_move():
             self.move(move)
             return True
         return False
 class Display:
     import pygame, math
-    def __init__(self, square_one_color = (160, 82, 45), square_two_color = (255, 255, 255), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True):
+    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 15):
         import pygame
         self.view_from_whites_perspective = if_view_from_whites_perspective
         self.square_one_color = square_one_color
@@ -449,21 +450,32 @@ class Display:
         pygame.init()
         pygame.display.init()
         self.screen = pygame.display.set_mode(screen_size)
+        if grid_lines_size == 0:
+            self.square_spacing_size = 0
         if self.screen_size[0] == screen_size[1]:
-            self.square_spacing_size = (screen_size[0] / 9) / 7
+            if grid_lines_size == 0:
+                self.square_spacing_size = -1
+            else:
+                self.square_spacing_size = (screen_size[0] / grid_lines_size) / 9
             self.board_offset_x = self.square_spacing_size
             self.board_offset_y = self.square_spacing_size
-            self.square_edge_size = (screen_size[0] / 9) - ((self.square_spacing_size * 2)) / 8
+            self.square_edge_size = (screen_size[0] - (self.square_spacing_size * 9)) / 8
         elif self.screen_size[0] > self.screen_size[1]:
-            self.square_spacing_size = (screen_size[1] / 9) / 7
+            if grid_lines_size == 0:
+                self.square_spacing_size = -1
+            else:
+                self.square_spacing_size = (screen_size[1] / grid_lines_size) / 9
             self.board_offset_x = self.square_spacing_size - (self.screen_size[1] - self.screen_size[0]) / 2
             self.board_offset_y = self.square_spacing_size
-            self.square_edge_size = (screen_size[1] / 9) - ((self.square_spacing_size * 2)) / 8
+            self.square_edge_size = (screen_size[1] - (self.square_spacing_size * 9)) / 8
         else:
-            self.square_spacing_size = (screen_size[0] / 9) / 7
+            if grid_lines_size == 0:
+                self.square_spacing_size = -1
+            else:
+                self.square_spacing_size = (screen_size[0] / grid_lines_size) / 9
             self.board_offset_x = self.square_spacing_size
             self.board_offset_y = self.square_spacing_size - (self.screen_size[0] - self.screen_size[1]) / 2
-            self.square_edge_size = (screen_size[0] / 9) - ((self.square_spacing_size * 2)) / 8
+            self.square_edge_size = (screen_size[0] - (self.square_spacing_size * 9)) / 8
         pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size))
         self.piece_locations = {"black Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size)),
                                 "black Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkBishop.png"), (self.square_edge_size, self.square_edge_size)),
@@ -484,7 +496,10 @@ class Display:
         pygame.draw.rect(self.screen, background, pygame.Rect(0, 0, self.screen_size[0], self.screen_size[1]))
     def setup_background_squares(self):
         import pygame
-        color_alternation = 0
+        if self.view_from_whites_perspective:
+            color_alternation = 1
+        else:
+            color_alternation = 0
         for i in range(64):
             if i % 8 == 0:
                 color_alternation = (color_alternation + 1) % 2
@@ -513,5 +528,36 @@ class Display:
         self.setup_background_squares()
         self.draw_pieces(board, self.view_from_whites_perspective)
         pygame.display.flip()
+    def get_square_pressed(self, index):
+        """Returns True if a square is being pressed, both the mouse coordinates being on it, and the mouse being down."""
+        import pygame
+        i = index
+        if ((pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][0] and
+            pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][1] and
+            pygame.mouse.get_pos()[0] <= self.drawn_background_squares[i][0] + self.drawn_background_squares[i][2] and
+            pygame.mouse.get_pos()[0] <= self.drawn_background_squares[i][1] + self.drawn_background_squares[i][3]) and
+            pygame.mouse.get_pressed(3)[0]):
+            return True
+        return False
+    def quittable(self, board_class):
+        """Mainly for testing"""
+        import pygame
+        running = True
+        # game loop
+        while running:
+
+            # for loop through the event queue
+            for event in pygame.event.get():
+
+                # Check for QUIT event
+                if event.type == pygame.QUIT:
+                    running = False
+            inputy = input("What move would you like to do?")
+            board_class.legal_move(inputy)
+            self.update_screen(board_class)
+boardy = Board()
+displaye = Display(grid_lines_size= 0)
+displaye.update_screen(boardy)
+displaye.quittable(boardy)
 
 
