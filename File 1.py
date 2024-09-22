@@ -3,8 +3,6 @@ import time
 from types import NoneType
 
 
-# TODO fix error w/advancing a pawn one square
-
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
     Terms:
