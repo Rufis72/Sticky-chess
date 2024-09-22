@@ -588,7 +588,6 @@ class Display:
             self.board_offset_y = self.square_spacing_size - (self.screen_size[0] - self.screen_size[1]) / 2
             self.square_edge_size = (screen_size[0] - (self.square_spacing_size * 9)) / 8
         pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size))
-        self.piece_move_animation = []
         self.piece_locations = {"black Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size)),
                                 "black Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkBishop.png"), (self.square_edge_size, self.square_edge_size)),
                                 "black Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKnight.png"), (self.square_edge_size, self.square_edge_size)),
@@ -620,27 +619,18 @@ class Display:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_one_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size)))
             else:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size)))
-    def generate_animation(self, move, board_class, total_steps = 60):
-        # meaning: [Step, modifier, origin, total_steps, end]
-        start_index = board_class.get_index_via_notation(move[0:2])
-        end_index = board_class.get_index_via_notation(move[2:4])
-        full_square_size = self.square_spacing_size + self.square_edge_size
-        print((end_index[0] - start_index[0]))
-        self.piece_move_animation = [1, (((end_index[0] - start_index[0]) * full_square_size) / total_steps, ((end_index[1] - start_index[1]) * full_square_size) / total_steps), start_index, total_steps + 1, end_index]
     def draw_pieces(self, board_class, whites_point_of_view = True):
         import pygame
         if whites_point_of_view:
             board_class.board_color.reverse()
             board_class.board.reverse()
-        # Drawing all pieces (except for any animated piece)
+        # Drawing all pieces
         for i in range(8):
             for n in range(8):
-                if self.piece_move_animation != None:
-                    if i != self.piece_move_animation[4][0] or n != self.piece_move_animation[4][1]:
-                        try:
-                            self.screen.blit(self.piece_locations.get(board_class.board_color[i][n] + " " + board_class.board[i][n]), ((n * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_x, (i * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_y))
-                        except:
-                            pass
+                try:
+                    self.screen.blit(self.piece_locations.get(board_class.board_color[i][n] + " " + board_class.board[i][n]), ((n * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_x, (i * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_y))
+                except:
+                    pass
                 else:
                     try:
                         self.screen.blit(
@@ -649,12 +639,6 @@ class Display:
                             (i * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_y))
                     except:
                         pass
-        # Drawing any animation (if any)
-        if self.piece_move_animation != None:
-            self.screen.blit(self.piece_locations.get(board_class.board_color[self.piece_move_animation[2][0]][self.piece_move_animation[2][1]] + " " + board_class.board[self.piece_move_animation[2][0]][self.piece_move_animation[2][1]]), ((self.piece_move_animation[2][0] + (self.piece_move_animation[1][0] * self.piece_move_animation[0])), self.piece_move_animation[2][1] + (self.piece_move_animation[1][1] * self.piece_move_animation[0])))
-            self.piece_move_animation[0] += 1
-            if self.piece_move_animation[0] == self.piece_move_animation[3]:
-                self.piece_move_animation = None
         if whites_point_of_view:
             board_class.board_color.reverse()
             board_class.board.reverse()
@@ -689,10 +673,3 @@ class Display:
                     running = False
             self.update_screen(board_class)
             time.sleep(0.1)
-            print(self.piece_move_animation)
-boardy = Board()
-displaye = Display(grid_lines_size=0)
-displaye.generate_animation("e2e3", boardy, 10)
-boardy.move("e2e3")
-displaye.update_screen(boardy)
-Display.quittable(displaye, boardy)
