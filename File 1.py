@@ -395,7 +395,6 @@ class Board:
         # Checking if any squares have friendly pieces on them
         for i in range(len(moves) - 1, -1, -1):
             if moves[i] != "o-o" and moves[i] != "o-o-o":
-                print(moves[i])
                 if self.get_square_value(moves[i])[1] != self.get_square_value(notation)[1]:
                     del moves[i]
         return moves
@@ -448,7 +447,6 @@ class Board:
         if color != None:
             i2 = 0
             for i in range(len(pieces_locations)):
-                print(f"fasfdsfdsafa {i}, {pieces_locations[i2]}, {notation}")
                 if self.get_square_value(pieces_locations[i2])[1] != color:
                     del pieces_locations[i2]
                     i2 -= 1
@@ -495,11 +493,8 @@ class Board:
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
         # Checking if the move is castling, and if so skipping normal legal move check procedures (to prevent an error)
         if move[0] == "o":
-            print("a")
             if self.who_to_move() == "white":
-                print("b")
                 if self.get_square_value("e1") == ("King", "white"):
-                    print("c")
                     if self.errorless_index(self.get_legal_as_king("e1"), "o-o") and move == "o-o":
                         self.move("e1g1")
                         self.move("h1f1")
@@ -526,8 +521,18 @@ class Board:
                         self.black_oo = False
                         self.black_ooo = False
                         return True
+        # Checks for en pessant
+        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2]:
+            index_FL = self.get_index_via_notation(move[2:4])
+            if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
+                self.move(move)
+                self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
+                return True
+            if self.get_square_value(move[0:2])[1] == "black" and self.board[index_FL[0] + 1][index_FL[1]] == "Pawn":
+                self.move(move)
+                self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
+                return True
         else:
-            print(self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]))
             if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
                 self.move(move)
                 return True
@@ -658,12 +663,5 @@ class Display:
             inputy = input("What move would you like to do?")
             board_class.legal_move(inputy)
             self.update_screen(board_class)
-""" (TESTING CODE, PAY NO HEED) boardy = Board()
-displaye = Display(grid_lines_size= 0)
-help(boardy.legal_moves)
-boardy.legal_moves(["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "f8c5", "o-o"])
-print(boardy.get_legal_as_king("e1"))
-displaye.update_screen(boardy)
-displaye.quittable(boardy)"""
 
 
