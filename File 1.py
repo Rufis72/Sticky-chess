@@ -1,5 +1,7 @@
 import math
 import time
+from types import NoneType
+
 
 # TODO fix error w/advancing a pawn one square
 
@@ -319,6 +321,7 @@ class Board:
         # Converting all indexs to notations
         for i in range(len(moves)):
             moves[i] = self.get_notation_via_index(moves[i])
+        return moves
 
 
     def get_seeing_as_queen_at(self, notation):
@@ -420,17 +423,18 @@ class Board:
         elif piece == "Pawn":
             moves = self.get_seeing_as_pawn_at(notation)
         # Checking if any squares are illegal (excluding castling)
-        for i in range(len(moves)):
-            moves[i] = self.get_index_via_notation(moves[i])
-        i2 = 0
-        for i in range(len(moves)):
-            if moves[i] != "o-o" and moves[i] != "o-o-o":
-                if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7:
-                    del moves[i2]
-                    i2 -= 1
-                i2 += 1
-        for i in range(len(moves)):
-            moves[i] = self.get_notation_via_index(moves[i])
+        if type(moves) != NoneType:
+            for i in range(len(moves)):
+                moves[i] = self.get_index_via_notation(moves[i])
+            i2 = 0
+            for i in range(len(moves)):
+                if moves[i] != "o-o" and moves[i] != "o-o-o":
+                    if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7:
+                        del moves[i2]
+                        i2 -= 1
+                    i2 += 1
+            for i in range(len(moves)):
+                moves[i] = self.get_notation_via_index(moves[i])
         return moves
 
 
@@ -461,23 +465,24 @@ class Board:
         else:
             piece = self.get_square_value(notation)[0]
         if piece == "Pawn":
-            moves = [*self.get_legal_as_pawn_at(notation)]
+            moves = self.get_legal_as_pawn_at(notation)
         elif piece == "King":
-            moves = [*self.get_legal_as_king(notation)]
+            moves = self.get_legal_as_king(notation)
         else:
-            moves = [*self.get_piece_seeing(notation)]
+            moves = self.get_piece_seeing(notation)
         # Changes all squares to indexs
-        for i in range(len(moves)):
-            moves[i] = self.get_index_via_notation(moves[i])
-        # Checking if any squares are "illegal"
-        i2 = 0
-        for i in range(len(moves)):
-            if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7 or self.get_square_value(notation)[1] == self.board_color[moves[i2][0]][moves[i2][1]]:
-                del moves[i2]
-                i2 -= 1
-            i2 += 1
-        for i in range(len(moves)):
-            moves[i] = self.get_notation_via_index(moves[i])
+        if type(moves) != NoneType:
+            for i in range(len(moves)):
+                moves[i] = self.get_index_via_notation(moves[i])
+            # Checking if any squares are "illegal"
+            i2 = 0
+            for i in range(len(moves)):
+                if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7 or self.get_square_value(notation)[1] == self.board_color[moves[i2][0]][moves[i2][1]]:
+                    del moves[i2]
+                    i2 -= 1
+                i2 += 1
+            for i in range(len(moves)):
+                moves[i] = self.get_notation_via_index(moves[i])
         return moves
 
 
@@ -663,9 +668,3 @@ class Display:
             inputy = input("What move would you like to do?")
             board_class.legal_move(inputy)
             self.update_screen(board_class)
-boardy = Board()
-displaye = Display(grid_lines_size=0)
-help(boardy.legal_moves)
-boardy.legal_moves(["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "f8c5", "o-o", "g8f6", "d2d4", "o-o", "f1e1", "f8e8"])
-displaye.update_screen(boardy)
-displaye.quittable(boardy)
