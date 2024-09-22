@@ -318,14 +318,14 @@ class Board:
         moves = []
         index = self.get_index_via_notation(notation)
         # Adds every possible direction of squares next to the king
-        moves.append((index[0] - 1, index[1] - 1))
-        moves.append((index[0] - 1, index[1] + 1))
         moves.append((index[0] + 1, index[1] + 1))
         moves.append((index[0] + 1, index[1] - 1))
+        moves.append((index[0] - 1, index[1] - 1))
+        moves.append((index[0] - 1, index[1] + 1))
+        moves.append((index[0] + 1, index[1]))
+        moves.append((index[0] - 1, index[1]))
         moves.append((index[0], index[1] + 1))
         moves.append((index[0], index[1] - 1))
-        moves.append((index[0] - 1, index[1]))
-        moves.append((index[0] + 1, index[1]))
         i2 = 0
         for i in range(len(moves)):
             if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7:
@@ -345,16 +345,23 @@ class Board:
         # Checking the color of the king
         if self.get_square_value(notation)[1] == "white":
             # Castling for white
-            if self.white_oo and self.get_pieces_seeing("f1") == [] and self.get_piece_seeing("g1") == []:
+            if self.white_oo and self.get_pieces_seeing("f1", "black") == [] and self.get_pieces_seeing("g1", "black") == [] and self.get_square_value("f1") == (None, None) and self.get_square_value("g1") == (None, None) and self.white_oo:
                 moves.append("o-o")
-            if self.white_oo and self.get_pieces_seeing("b1") == [] and self.get_piece_seeing("c1") == [] and self.get_piece_seeing("d1"):
+            if self.white_oo and self.get_pieces_seeing("b1", "black") == [] and self.get_pieces_seeing("c1", "black") == [] and self.get_pieces_seeing("d1", "black") == [] and self.get_square_value("b1") == (None, None) and self.get_square_value("c1") == (None, None) and self.get_square_value("d1") == (None, None) and self.white_ooo:
                 moves.append("o-o-o")
         else:
             # Castling for black
-            if self.black_oo and self.get_pieces_seeing("f8") == [] and self.get_piece_seeing("g8") == []:
+            if self.black_oo and self.get_pieces_seeing("f8", "white") == [] and self.get_pieces_seeing("g8", "white") == [] and self.get_square_value("f8") == (None, None) and self.get_square_value("g8") == (None, None) and self.black_oo:
                 moves.append("o-o")
-            if self.black_oo and self.get_pieces_seeing("b8") == [] and self.get_piece_seeing("c8") == [] and self.get_piece_seeing("d8"):
+            if self.black_oo and self.get_pieces_seeing("b8", "white") == [] and self.get_pieces_seeing("c8", "white") == [] and self.get_pieces_seeing("d8", "white") == [] and self.get_square_value("b8") == (None, None) and self.get_square_value("c8") == (None, None) and self.get_square_value("d8") == (None, None) and self.black_ooo:
                 moves.append("o-o-o")
+        # Checking if any squares have friendly pieces on them
+        for i in range(len(moves) - 1, -1, -1):
+            if moves[i] != "o-o" and moves[i] != "o-o-o":
+                print(moves[i])
+                if self.get_square_value(moves[i])[1] != self.get_square_value(notation)[1]:
+                    del moves[i]
+        return moves
     
     
     def get_piece_seeing(self, notation):
@@ -376,35 +383,48 @@ class Board:
             moves = [*moves, *self.get_seeing_as_rook_at(notation)]
         elif piece == "Pawn":
             moves = [*moves, *self.get_seeing_as_pawn_at(notation)]
-        # Checking if any squares are illegal
+        # Checking if any squares are illegal (excluding castling)
         for i in range(len(moves)):
             moves[i] = self.get_index_via_notation(moves[i])
         i2 = 0
         for i in range(len(moves)):
-            if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7:
-                del moves[i2]
-                i2 -= 1
-            i2 += 1
+            if moves[i] != "o-o" and moves[i] != "o-o-o":
+                if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7:
+                    del moves[i2]
+                    i2 -= 1
+                i2 += 1
         for i in range(len(moves)):
             moves[i] = self.get_notation_via_index(moves[i])
         return moves
 
 
-    def get_pieces_seeing(self, notation):
-        """Returns the squares off all pieces seeing a certain square (the square in question is gotten from notation)"""
+    def get_pieces_seeing(self, notation, color = None):
+        """Returns the squares off all pieces seeing a certain square (the square in question is gotten from notation), color removes all pieces that are not of one color"""
         pieces_locations = []
-        for i in range(64):
-            if self.board[math.floor(i / 8)][i % 8] != None:
+        for i in range(8):
+            for n in range(8):
                 try:
-                    pieces_locations.append(self.get_piece_seeing(self.get_notation_via_index((math.floor(i / 8), i % 8))))
+                    if self.get_piece_seeing(self.get_notation_via_index((i, n))).index(notation) != None:
+                        pieces_locations.append(self.get_notation_via_index((i, n)))
                 except:
                     pass
+        if color != None:
+            i2 = 0
+            for i in range(len(pieces_locations)):
+                print(f"fasfdsfdsafa {i}, {pieces_locations[i2]}, {notation}")
+                if self.get_square_value(pieces_locations[i2])[1] != color:
+                    del pieces_locations[i2]
+                    i2 -= 1
+                i2 += 1
         return pieces_locations
 
 
     def get_legal_moves(self, notation):
         """Returns all legal moves of a piece on a specific square (gotten via notation) (The moves are obtained by either getting what squares a piece sees, then vetting all the moves to remove the squares it cannot move to. Or uses the respective function to calculate that piece's legal moves)."""
-        piece = self.get_square_value(notation)[0]
+        if notation[0] == "o": # Checks if the move is castling. (otherwise you get an error)
+            piece = "King"
+        else:
+            piece = self.get_square_value(notation)[0]
         if piece == "Pawn":
             moves = [*self.get_legal_as_pawn_at(notation)]
         elif piece == "King":
@@ -436,10 +456,44 @@ class Board:
 
     def legal_move(self, move):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
-        print(self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]))
-        if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
-            self.move(move)
-            return True
+        # Checking if the move is castling, and if so skipping normal legal move check procedures (to prevent an error)
+        if move[0] == "o":
+            print("a")
+            if self.who_to_move() == "white":
+                print("b")
+                if self.get_square_value("e1") == ("King", "white"):
+                    print("c")
+                    if self.errorless_index(self.get_legal_as_king("e1"), "o-o") and move == "o-o":
+                        self.move("e1g1")
+                        self.move("h1f1")
+                        self.white_oo = False
+                        self.white_ooo = False
+                        return True
+                    if self.errorless_index(self.get_legal_as_king("e1"), "o-o-o") and move == "o-o-o":
+                        self.move("e1c1")
+                        self.move("a1d1")
+                        self.white_oo = False
+                        self.white_ooo = False
+                        return True
+            else:
+                if self.get_square_value("e8") == ("King", "black"):
+                    if self.errorless_index(self.get_legal_as_king("e8"), "o-o") and move == "o-o":
+                        self.move("e8g8")
+                        self.move("h8f8")
+                        self.black_oo = False
+                        self.black_ooo = False
+                        return True
+                    if self.errorless_index(self.get_legal_as_king("e8"), "o-o-o") and move == "o-o-o":
+                        self.move("e8c8")
+                        self.move("a8d8")
+                        self.black_oo = False
+                        self.black_ooo = False
+                        return True
+        else:
+            print(self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]))
+            if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
+                self.move(move)
+                return True
         return False
 
 
@@ -569,7 +623,9 @@ class Display:
             self.update_screen(board_class)
 boardy = Board()
 displaye = Display(grid_lines_size= 0)
-boardy.legal_moves(["e2e4", "e7e5", "g1f3", "b8c6", "f1c4"])
+help(boardy.legal_moves)
+boardy.legal_moves(["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "f8c5", "o-o"])
+print(boardy.get_legal_as_king("e1"))
 displaye.update_screen(boardy)
 displaye.quittable(boardy)
 
