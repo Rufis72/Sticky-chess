@@ -1,7 +1,6 @@
 import math
 import time
 
-# TODO: add get_seeing_as_rook_at and get_seeing_as_queen_at, also finish set_position_via_fen, add a section to recognise en pessant to legal_move(), error with advancing a pawn one square
 
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
@@ -287,7 +286,43 @@ class Board:
         for i in range(len(moves)):
             moves[i] = self.get_notation_via_index(moves[i])
         return moves
-    
+
+
+    def get_seeing_as_rook_at(self, notation):
+        """Returns all squares a rook at notation could see"""
+        # Defining variables
+        index = self.get_index_via_notation(notation)
+        moves = []
+        # Columns
+        for i in range(index[0] - 1, -1, -1):
+            moves.append((i, index[1]))
+            if self.board[i][index[1]] != None:
+                break
+        for i in range(index[0] + 1, 1, 8):
+            moves.append((i, index[1]))
+            if self.board[i][index[1]] != None:
+                break
+        # Rows
+        for i in range(index[1] - 1, -1, -1):
+            moves.append((index[0], i))
+            if self.board[index[0]][i] != None:
+                break
+        for i in range(index[1] + 1, 1, 8):
+            moves.append((index[0], i))
+            if self.board[index[0]][i] != None:
+                break
+        # Checking if any squares are illegal
+        for i in range(len(moves) - 1, -1, -1):
+            if moves[i][0] < 0 or moves[i][0] > 7 or moves[i][1] < 0 or moves[i][1] > 7:
+                del moves[i]
+        # Converting all indexs to notations
+        for i in range(len(moves)):
+            moves[i] = self.get_notation_via_index(moves[i])
+
+
+    def get_seeing_as_queen_at(self, notation):
+        return [*self.get_seeing_as_rook_at(notation), *self.get_seeing_as_bishop_at(notation)]
+
     
     def get_seeing_as_knight_at(self, notation):
         """Returns all legal squares a knight could move to from a certain square (The passed in notation)."""
@@ -312,6 +347,8 @@ class Board:
         for i in range(len(moves)):
             moves[i] = self.get_notation_via_index(moves[i])
         return moves
+
+
     def get_seeing_as_king(self, notation):
         """Returns all squares a king protects from a certain square (the passed in notation)."""
         # Defining variables
@@ -621,12 +658,12 @@ class Display:
             inputy = input("What move would you like to do?")
             board_class.legal_move(inputy)
             self.update_screen(board_class)
-boardy = Board()
+""" (TESTING CODE) boardy = Board()
 displaye = Display(grid_lines_size= 0)
 help(boardy.legal_moves)
 boardy.legal_moves(["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "f8c5", "o-o"])
 print(boardy.get_legal_as_king("e1"))
 displaye.update_screen(boardy)
-displaye.quittable(boardy)
+displaye.quittable(boardy)"""
 
 
