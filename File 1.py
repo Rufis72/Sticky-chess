@@ -658,7 +658,7 @@ class Display:
             inputy = input("What move would you like to do?")
             board_class.legal_move(inputy)
             self.update_screen(board_class)
-""" (TESTING CODE) boardy = Board()
+""" (TESTING CODE, PAY NO HEED) boardy = Board()
 displaye = Display(grid_lines_size= 0)
 help(boardy.legal_moves)
 boardy.legal_moves(["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "f8c5", "o-o"])
