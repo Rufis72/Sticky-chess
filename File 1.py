@@ -1,6 +1,7 @@
 import math
 import time
 
+# TODO fix error w/advancing a pawn one square
 
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
@@ -407,18 +408,17 @@ class Board:
         piece_color = self.board_color[index[0]][index[1]]
         moves = []
         if piece == "Knight":
-            moves = [*moves, *self.get_seeing_as_knight_at(notation)]
+            moves = self.get_seeing_as_knight_at(notation)
         if piece == "King":
-            moves = [*moves, *self.get_seeing_as_king_at(notation)]
+            moves = self.get_seeing_as_king_at(notation)
         elif piece == "Rook":
-            moves = [*moves, *self.get_seeing_as_rook_at(notation)]
+            moves = self.get_seeing_as_rook_at(notation)
         elif piece == "Bishop":
-            moves = [*moves, *self.get_seeing_as_bishop_at(notation)]
+            moves = self.get_seeing_as_bishop_at(notation)
         elif piece == "Queen":
-            moves = [*moves, *self.get_seeing_as_bishop_at(notation)]
-            moves = [*moves, *self.get_seeing_as_rook_at(notation)]
+            moves = self.get_seeing_as_queen_at(notation)
         elif piece == "Pawn":
-            moves = [*moves, *self.get_seeing_as_pawn_at(notation)]
+            moves = self.get_seeing_as_pawn_at(notation)
         # Checking if any squares are illegal (excluding castling)
         for i in range(len(moves)):
             moves[i] = self.get_index_via_notation(moves[i])
@@ -663,3 +663,9 @@ class Display:
             inputy = input("What move would you like to do?")
             board_class.legal_move(inputy)
             self.update_screen(board_class)
+boardy = Board()
+displaye = Display(grid_lines_size=0)
+help(boardy.legal_moves)
+boardy.legal_moves(["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "f8c5", "o-o", "g8f6", "d2d4", "o-o", "f1e1", "f8e8"])
+displaye.update_screen(boardy)
+displaye.quittable(boardy)
