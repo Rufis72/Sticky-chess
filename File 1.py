@@ -122,7 +122,7 @@ class Board:
         # Checking if the piece is a king
         if piece_values[0] == "King":
             # Changes one sides castling rights to all be false
-            if piece_values[1] == "White":
+            if piece_values[1] == "white":
                 # Removes White's castling rights
                 self.white_oo = False
                 self.white_ooo = False
@@ -388,9 +388,9 @@ class Board:
                 moves.append("o-o-o")
         else:
             # Castling for black
-            if self.black_oo and self.get_pieces_seeing("f8", "white") == [] and self.get_pieces_seeing("g8", "white") == [] and self.get_square_value("f8") == (None, None) and self.get_square_value("g8") == (None, None) and self.black_oo:
+            if self.black_oo and self.get_pieces_seeing("f8", "white") == [] and self.get_pieces_seeing("g8", "white") == [] and self.get_square_value("f8") == (None, None) and self.get_square_value("g8") == (None, None):
                 moves.append("o-o")
-            if self.black_oo and self.get_pieces_seeing("b8", "white") == [] and self.get_pieces_seeing("c8", "white") == [] and self.get_pieces_seeing("d8", "white") == [] and self.get_square_value("b8") == (None, None) and self.get_square_value("c8") == (None, None) and self.get_square_value("d8") == (None, None) and self.black_ooo:
+            if self.black_oo and self.get_pieces_seeing("b8", "white") == [] and self.get_pieces_seeing("c8", "white") == [] and self.get_pieces_seeing("d8", "white") == [] and self.get_square_value("b8") == (None, None) and self.get_square_value("c8") == (None, None) and self.get_square_value("d8") == (None, None):
                 moves.append("o-o-o")
         # Checking if any squares have friendly pieces on them
         for i in range(len(moves) - 1, -1, -1):
@@ -539,7 +539,7 @@ class Board:
         return False
 
 
-    def legal_moves(self, moves, interval = 0):
+    def legal_moves(self, moves):
         returning = []
         for i in range(len(moves)):
             returning.append(self.legal_move(moves[i]))
