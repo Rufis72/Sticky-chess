@@ -522,7 +522,7 @@ class Board:
                         self.black_ooo = False
                         return True
         # Checks for en pessant
-        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2]:
+        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
             index_FL = self.get_index_via_notation(move[2:4])
             if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
                 self.move(move)
@@ -539,7 +539,7 @@ class Board:
         return False
 
 
-    def legal_moves(self, moves):
+    def legal_moves(self, moves, interval = 0):
         returning = []
         for i in range(len(moves)):
             returning.append(self.legal_move(moves[i]))
@@ -663,5 +663,3 @@ class Display:
             inputy = input("What move would you like to do?")
             board_class.legal_move(inputy)
             self.update_screen(board_class)
-
-
