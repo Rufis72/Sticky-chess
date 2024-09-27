@@ -702,8 +702,3 @@ class Display:
             move = input("")
             board_class.legal_move(move)
             self.update_screen(board_class)
-boardy = Board()
-displaye = Display(grid_lines_size=0)
-boardy.legal_moves(["e2e4", "a7a6", "e4e5", "d7d5", "e5d6"])
-displaye.update_screen(boardy)
-displaye.quittable(boardy)
