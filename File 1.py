@@ -531,7 +531,7 @@ class Board:
                 self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
                 return True
         # Checks for pawn promotion (combined with enpessant)
-        if self.get_square_value(move[0:2])[0] == "Pawn":
+        elif self.get_square_value(move[0:2])[0] == "Pawn":
             if self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
                 index_FL = self.get_index_via_notation(move[2:4])
                 if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
