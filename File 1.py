@@ -490,6 +490,8 @@ class Board:
 
     def legal_move(self, move):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
+        # Defining variables
+        if_first_pawn_logic_failed = False
         # Checking if the move is castling, and if so skipping normal legal move check procedures (to prevent an error)
         if move[0] == "o":
             if self.who_to_move() == "white":
@@ -553,7 +555,14 @@ class Board:
                     self.set_square_value(move[2:4], piece="Rook")
                 elif move[5] == "Q":
                     self.set_square_value(move[2:4], piece="Queen")
+            else:
+                if_first_pawn_logic_failed = True
+
         else:
+            if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
+                self.move(move)
+                return True
+        if if_first_pawn_logic_failed:
             if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
                 self.move(move)
                 return True
