@@ -1,7 +1,7 @@
 import math
 import time
-from types import NoneType
 
+# TODO make pawn promotion
 
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
@@ -40,25 +40,10 @@ class Board:
         self.black_oo = True
         self.black_ooo = True
 
-
-    def set_position_via_fen(self, fen):
-        pass
-    
     
     def get_notation_via_index(self, index):
         """Returns the notation based off an index"""
         return self.board_notation[index[0]][index[1]]
-
-
-    def if_contains(self, item, search):
-        """Returns True if a list contains a value, otherwise returns False."""
-        for i in range(len(search)):
-            try:
-                item.index(search[i])
-                return True
-            except:
-                pass
-        return False
     
     
     def get_index_via_notation(self, notation):
@@ -225,6 +210,15 @@ class Board:
             moves[i] = self.get_notation_via_index(moves[i])
         return moves
 
+
+    def set_square_value(self, notation, color = None, piece = None):
+        index = self.get_index_via_notation(notation)
+        if color != None:
+            self.board_color[index[0]][index[1]] = color
+        if piece != None:
+            self.board[index[0]][index[1]] = piece
+        if piece == None and color == None:
+            raise("No square changed")
 
     def get_legal_as_pawn_at(self, notation):
         """Returns all possible legal moves a pawn could make from a square (the passed in notation)."""
@@ -403,6 +397,7 @@ class Board:
     
     
     def get_piece_seeing(self, notation):
+        import types
         """Checks the value of square (gotten from notation), then gets what that piece sees (via checking the value of the square, then running that piece's respective function to get what it sees)."""
         index = self.get_index_via_notation(notation)
         piece = self.get_square_value(notation)[0]
@@ -421,7 +416,7 @@ class Board:
         elif piece == "Pawn":
             moves = self.get_seeing_as_pawn_at(notation)
         # Checking if any squares are illegal (excluding castling)
-        if type(moves) != NoneType:
+        if type(moves) != types.NoneType:
             for i in range(len(moves)):
                 moves[i] = self.get_index_via_notation(moves[i])
             i2 = 0
@@ -535,6 +530,28 @@ class Board:
                 self.move(move)
                 self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
                 return True
+        # Checks for pawn promotion (combined with enpessant)
+        if self.get_square_value(move[0:2])[0] == "Pawn":
+            if self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
+                index_FL = self.get_index_via_notation(move[2:4])
+                if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
+                    self.move(move)
+                    self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
+                    return True
+                if self.get_square_value(move[0:2])[1] == "black" and self.board[index_FL[0] + 1][index_FL[1]] == "Pawn":
+                    self.move(move)
+                    self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
+                    return True
+            elif self.get_square_value(move[0:2])[1] == "White" and move[3] == 7 and len(move) == 6 and move[4] == "=":
+                self.move(move[0:4])
+                if move[5] == "B":
+                    self.set_square_value(move[2:4], piece="Bishop")
+                elif move[5] == "N":
+                    self.set_square_value(move[2:4], piece="Knight")
+                elif move[5] == "R":
+                    self.set_square_value(move[2:4], piece="Rook")
+                elif move[5] == "Q":
+                    self.set_square_value(move[2:4], piece="Queen")
         else:
             if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
                 self.move(move)
@@ -600,6 +617,7 @@ class Display:
                                 "white Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightRook.png"), (self.square_edge_size, self.square_edge_size)),
                                 "white King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKing.png"), (self.square_edge_size, self.square_edge_size)),
                                 "white Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightQueen.png"), (self.square_edge_size, self.square_edge_size))}
+        pygame.display.set_caption("Sticky Chess")
     def draw_background(self, background = "Nothing entered"):
         import pygame
         if background == "Nothing entered":
@@ -671,5 +689,10 @@ class Display:
                 # Check for QUIT event
                 if event.type == pygame.QUIT:
                     running = False
+            move = input("")
+            board_class.legal_move(move)
             self.update_screen(board_class)
-            time.sleep(0.1)
+boardy = Board()
+displaye = Display(grid_lines_size=0)
+displaye.update_screen(boardy)
+displaye.quittable(boardy)
