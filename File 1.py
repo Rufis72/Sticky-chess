@@ -452,6 +452,7 @@ class Board:
 
 
     def get_legal_moves(self, notation):
+        import types
         """Returns all legal moves of a piece on a specific square (gotten via notation) (The moves are obtained by either getting what squares a piece sees, then vetting all the moves to remove the squares it cannot move to. Or uses the respective function to calculate that piece's legal moves)."""
         if notation[0] == "o": # Checks if the move is castling. (otherwise you get an error)
             piece = "King"
@@ -464,7 +465,7 @@ class Board:
         else:
             moves = self.get_piece_seeing(notation)
         # Changes all squares to indexs
-        if type(moves) != NoneType:
+        if type(moves) != types.NoneType:
             for i in range(len(moves)):
                 moves[i] = self.get_index_via_notation(moves[i])
             # Checking if any squares are "illegal"
@@ -694,5 +695,6 @@ class Display:
             self.update_screen(board_class)
 boardy = Board()
 displaye = Display(grid_lines_size=0)
+boardy.legal_moves(["e2e4", "a7a6", "e4e5", "d7d5", "e5d6"])
 displaye.update_screen(boardy)
 displaye.quittable(boardy)
