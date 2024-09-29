@@ -1,7 +1,10 @@
 import math
 import time
 
-# TODO make pawn promotion
+
+class IllegalMove(Exception):
+    """Illegal move error"""
+    pass
 
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
@@ -57,10 +60,10 @@ class Board:
                 self.board_color[self.get_index_via_notation(notation)[0]][self.get_index_via_notation(notation)[1]])
 
 
-    def if_white_can_enpessant_this_move(self):
+    def if_white_can_technocally_enpessant_this_move(self):
         """Returns True if there is a black pawn that has advanced two squares, otherwise returns False"""
         if len(self.player_moves) == 0:
-            return None
+            return False
         last_moved_piece = self.board[self.get_index_via_notation(self.player_moves[-1][2:4])[0]][self.get_index_via_notation(self.player_moves[-1][2:4])[1]]
         if last_moved_piece == "Pawn" and self.player_moves[-1][1] == "7" and self.player_moves[-1][3] == "5":
             return True
@@ -71,7 +74,7 @@ class Board:
     def if_black_can_enpessant_this_move(self):
         """Returns True if there is a white pawn that has advanced two squares, otherwise returns False."""
         if len(self.player_moves) == 0:
-            return None
+            return False
         if self.board[self.get_index_via_notation(self.player_moves[-1][2:4])[0]][self.get_index_via_notation(self.player_moves[-1][2:4])[1]] == "Pawn" and self.player_moves[-1][1] == "2" and self.player_moves[-1][3] == "4":
             return True
         else:
@@ -218,7 +221,7 @@ class Board:
         if piece != None:
             self.board[index[0]][index[1]] = piece
         if piece == None and color == None:
-            raise("No square changed")
+            raise TypeError("No square changed")
 
     def get_legal_as_pawn_at(self, notation):
         """Returns all possible legal moves a pawn could make from a square (the passed in notation)."""
@@ -239,7 +242,7 @@ class Board:
                 pass
             try:
                 # Checking for Enpessant
-                if self.if_white_can_enpessant_this_move():
+                if self.if_white_can_technocally_enpessant_this_move():
                     pawn_location = self.get_index_via_notation(self.player_moves[-1][2:4])
                     if index[1] - 1 == pawn_location[1] or index[1] + 1 == pawn_location[1]:
                         moves.append((pawn_location[0] + 1, pawn_location[1]))
@@ -496,7 +499,15 @@ class Board:
 
     def legal_move(self, move):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
-        # Defining variables
+        # Basic check for illegal moves
+        if len(move) < 4 and move != "o-o":
+            raise IllegalMove(f"move \"{move}\" is too short")
+        if len(move) > 6:
+            raise IllegalMove(f"move \"{move}\" is too long")
+        if not int(move[1]) <= 8 or not int(move[1]) >= 1:
+            raise IllegalMove(f"move \"{move}\" contains illegal square(s)")
+        if not int(move[3]) <= 8 or not int(move[3]) >= 1:
+            raise IllegalMove(f"move \"{move}\" contains illegal square(s)")
         # Checking if the move is castling, and if so skipping normal legal move check procedures (to prevent an error)
         if move[0] == "o":
             # Castling for white
@@ -541,8 +552,8 @@ class Board:
                         self.black_oo = False
                         self.black_ooo = False
                         return True
-        # Checks for enpessant
-        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
+        # Checks for enpessant (en peasant)
+        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1] and (self.if_white_can_technocally_enpessant_this_move() or self.if_black_can_enpessant_this_move()):
             # defining variables
             index_FL = self.get_index_via_notation(move[2:4])
             # Checking enpessant for white
@@ -556,7 +567,7 @@ class Board:
                 self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
                 return True
         # Checks for pawn promotion
-        if self.get_square_value(move[0:2])[0] == "Pawn" and len(move) == 6 and move[4] == "=" and move[3] == "8" or move[3] == "1":
+        elif self.get_square_value(move[0:2])[0] == "Pawn" and len(move) == 6 and move[4] == "=" and (move[3] == "8" or move[3] == "1"):
             # makes initial move
             self.move(move[0:4])
             # Changes the pawn to the piece its promoting to
@@ -572,7 +583,7 @@ class Board:
             if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
                 self.move(move)
                 return True
-        return False
+        raise IllegalMove(f"move \"{move}\" is illegal")
 
 
     def legal_moves(self, moves):
@@ -714,16 +725,12 @@ class Display:
     def get_square_pressed(self):
         """Returns an index of which square is being pressed, if none are, None is returned"""
         # importing modules
-        import pygame
+        import pygame, math
         # iterating through all squares and checking if it is pressed
         for i in range(64):
             # checking if the mouse is within the dimension of the square, and if left click is being pressed
-            if ((pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][0] and
-                pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][1] and
-                pygame.mouse.get_pos()[0] <= self.drawn_background_squares[i][0] + self.drawn_background_squares[i][2] and
-                pygame.mouse.get_pos()[0] <= self.drawn_background_squares[i][1] + self.drawn_background_squares[i][3]) and
-                pygame.mouse.get_pressed(3)[0]):
-                return i
+            if pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][0] + (self.square_spacing_size * ((i % 8) + 1)) and pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][1] + (self.square_spacing_size * (math.floor(i / 8) + 1)) and pygame.mouse.get_pos()[1] <= self.drawn_background_squares[i][0] + self.drawn_background_squares[i][2] + (self.square_spacing_size * ((i % 8) + 1)) and pygame.mouse.get_pos()[1] <= self.drawn_background_squares[i][1] + self.drawn_background_squares[i][3] + (self.square_spacing_size * (math.floor(i / 8) + 1)) and pygame.mouse.get_pressed(3)[0]:
+                return True
         return None
     def quittable(self, board_class):
         """Mainly for testing"""
@@ -738,5 +745,10 @@ class Display:
                 if event.type == pygame.QUIT:
                     running = False
             self.update_screen(board_class)
+            """if self.get_square_pressed() != None:
+                print(self.get_square_pressed())"""
             move = input("")
             board_class.legal_move(move)
+boardy = Board()
+displaye = Display()
+displaye.quittable(boardy)
