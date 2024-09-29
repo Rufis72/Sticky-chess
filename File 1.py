@@ -431,6 +431,12 @@ class Board:
         return moves
 
 
+    def clear_board(self):
+        for i in range(len(self.board)):
+            for n in range(len(self.board[i])):
+                self.board[i][n] = None
+
+
     def get_pieces_seeing(self, notation, color = None):
         """Returns the squares off all pieces seeing a certain square (the square in question is gotten from notation), color removes all pieces that are not of one color"""
         pieces_locations = []
@@ -491,7 +497,6 @@ class Board:
     def legal_move(self, move):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
         # Defining variables
-        if_first_pawn_logic_failed = False
         # Checking if the move is castling, and if so skipping normal legal move check procedures (to prevent an error)
         if move[0] == "o":
             if self.who_to_move() == "white":
@@ -522,7 +527,7 @@ class Board:
                         self.black_oo = False
                         self.black_ooo = False
                         return True
-        # Checks for en pessant
+        # Checks for enpessant
         elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
             index_FL = self.get_index_via_notation(move[2:4])
             if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
@@ -533,36 +538,28 @@ class Board:
                 self.move(move)
                 self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
                 return True
-        # Checks for pawn promotion (combined with enpessant)
-        elif self.get_square_value(move[0:2])[0] == "Pawn":
-            if self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
-                index_FL = self.get_index_via_notation(move[2:4])
-                if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
-                    self.move(move)
-                    self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
-                    return True
-                if self.get_square_value(move[0:2])[1] == "black" and self.board[index_FL[0] + 1][index_FL[1]] == "Pawn":
-                    self.move(move)
-                    self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
-                    return True
-            elif self.get_square_value(move[0:2])[1] == "White" and move[3] == 7 and len(move) == 6 and move[4] == "=":
-                self.move(move[0:4])
-                if move[5] == "B":
-                    self.set_square_value(move[2:4], piece="Bishop")
-                elif move[5] == "N":
-                    self.set_square_value(move[2:4], piece="Knight")
-                elif move[5] == "R":
-                    self.set_square_value(move[2:4], piece="Rook")
-                elif move[5] == "Q":
-                    self.set_square_value(move[2:4], piece="Queen")
-            else:
-                if_first_pawn_logic_failed = True
-
-        else:
-            if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
+        # Checks for pawn promotion
+        if self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
+            index_FL = self.get_index_via_notation(move[2:4])
+            if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
                 self.move(move)
+                self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
                 return True
-        if if_first_pawn_logic_failed:
+            if self.get_square_value(move[0:2])[1] == "black" and self.board[index_FL[0] + 1][index_FL[1]] == "Pawn":
+                self.move(move)
+                self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
+                return True
+        if self.get_square_value(move[0:2])[0] == "Pawn" and move[3] == 7 and len(move) == 6 and move[4] == "=":
+            self.move(move[0:4])
+            if move[5] == "B":
+                self.set_square_value(move[2:4], piece="Bishop")
+            elif move[5] == "N":
+                self.set_square_value(move[2:4], piece="Knight")
+            elif move[5] == "R":
+                self.set_square_value(move[2:4], piece="Rook")
+            elif move[5] == "Q":
+                self.set_square_value(move[2:4], piece="Queen")
+        else:
             if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
                 self.move(move)
                 return True
@@ -576,7 +573,7 @@ class Board:
         return returning
 class Display:
     import pygame, math
-    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 15):
+    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0):
         import pygame
         self.view_from_whites_perspective = if_view_from_whites_perspective
         self.square_one_color = square_one_color
@@ -699,6 +696,11 @@ class Display:
                 # Check for QUIT event
                 if event.type == pygame.QUIT:
                     running = False
-            move = input("")
-            board_class.legal_move(move)
             self.update_screen(board_class)
+            move = "e7e8=Q"
+            board_class.legal_move(move)
+boardy = Board()
+displaye = Display()
+boardy.clear_board()
+boardy.set_square_value("e7", "white", "Pawn")
+displaye.quittable(boardy)
