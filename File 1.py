@@ -1,7 +1,3 @@
-import math
-import time
-
-
 class IllegalMove(Exception):
     """Illegal move error"""
     pass
