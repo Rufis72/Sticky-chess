@@ -701,7 +701,6 @@ class Display:
                 move = "o-o"
             if move == "e1c1" or move == "e8c8":
                 move = "o-o-o"
-            print(move)
             board_class.legal_move(move, False)
             self.square_selected_one = None
             self.square_selected_two = None
@@ -786,5 +785,3 @@ class Display:
                 if event.type == pygame.QUIT:
                     running = False
             self.update_screen(board_class)
-            if self.get_square_pressed() != None:
-                print(self.get_square_pressed())
