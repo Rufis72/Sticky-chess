@@ -556,7 +556,7 @@ class Board:
                 self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
                 return True
         # Checks for pawn promotion
-        if self.get_square_value(move[0:2])[0] == "Pawn" and move[3] == 7 and len(move) == 6 and move[4] == "=":
+        if self.get_square_value(move[0:2])[0] == "Pawn" and len(move) == 6 and move[4] == "=" and move[3] == "8" or move[3] == "1":
             # makes initial move
             self.move(move[0:4])
             # Changes the pawn to the piece its promoting to
@@ -738,5 +738,5 @@ class Display:
                 if event.type == pygame.QUIT:
                     running = False
             self.update_screen(board_class)
-            move = "e7e8=Q"
+            move = input("")
             board_class.legal_move(move)
