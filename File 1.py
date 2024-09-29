@@ -11,7 +11,6 @@ class Board:
     Terms:
     Notation: A string used to represent a square in chess
     Index: Typically used to represent the acutal location of a square's information"""
-    import random, math
     def __init__(self):
         self.board = [["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"],
                  ["Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn"],
@@ -60,7 +59,7 @@ class Board:
                 self.board_color[self.get_index_via_notation(notation)[0]][self.get_index_via_notation(notation)[1]])
 
 
-    def if_white_can_technocally_enpessant_this_move(self):
+    def if_white_can_enpessant_this_move(self):
         """Returns True if there is a black pawn that has advanced two squares, otherwise returns False"""
         if len(self.player_moves) == 0:
             return False
@@ -242,7 +241,7 @@ class Board:
                 pass
             try:
                 # Checking for Enpessant
-                if self.if_white_can_technocally_enpessant_this_move():
+                if self.if_white_can_enpessant_this_move():
                     pawn_location = self.get_index_via_notation(self.player_moves[-1][2:4])
                     if index[1] - 1 == pawn_location[1] or index[1] + 1 == pawn_location[1]:
                         moves.append((pawn_location[0] + 1, pawn_location[1]))
@@ -497,17 +496,18 @@ class Board:
             return "black"
 
 
-    def legal_move(self, move):
+    def legal_move(self, move, raise_error_if_illegal = True):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
         # Basic check for illegal moves
         if len(move) < 4 and move != "o-o":
             raise IllegalMove(f"move \"{move}\" is too short")
+        if move != "o-o":
+            if not int(move[1]) <= 8 or not int(move[1]) >= 1:
+                raise IllegalMove(f"move \"{move}\" contains illegal square(s)")
+            if not int(move[3]) <= 8 or not int(move[3]) >= 1:
+                raise IllegalMove(f"move \"{move}\" contains illegal square(s)")
         if len(move) > 6:
             raise IllegalMove(f"move \"{move}\" is too long")
-        if not int(move[1]) <= 8 or not int(move[1]) >= 1:
-            raise IllegalMove(f"move \"{move}\" contains illegal square(s)")
-        if not int(move[3]) <= 8 or not int(move[3]) >= 1:
-            raise IllegalMove(f"move \"{move}\" contains illegal square(s)")
         # Checking if the move is castling, and if so skipping normal legal move check procedures (to prevent an error)
         if move[0] == "o":
             # Castling for white
@@ -553,7 +553,7 @@ class Board:
                         self.black_ooo = False
                         return True
         # Checks for enpessant (en peasant)
-        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1] and (self.if_white_can_technocally_enpessant_this_move() or self.if_black_can_enpessant_this_move()):
+        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1] and (self.if_white_can_enpessant_this_move() or self.if_black_can_enpessant_this_move()):
             # defining variables
             index_FL = self.get_index_via_notation(move[2:4])
             # Checking enpessant for white
@@ -583,7 +583,10 @@ class Board:
             if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
                 self.move(move)
                 return True
-        raise IllegalMove(f"move \"{move}\" is illegal")
+        if raise_error_if_illegal:
+            raise IllegalMove(f"move \"{move}\" is illegal")
+        else:
+            return False
 
 
     def legal_moves(self, moves):
@@ -604,6 +607,16 @@ class Display:
         self.background = background
         self.frame = 0
         self.drawn_background_squares = []
+        self.square_selected_one = None
+        self.square_selected_two = None
+        self.board_notation = ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+                          "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+                          "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+                          "a3", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+                          "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+                          "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+                          "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+                          "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"]
         # Defining variables - Math for scaling
         if grid_lines_size == 0:
             self.square_spacing_size = 0
@@ -674,6 +687,24 @@ class Display:
         # Draws a background based off the passed in background color
         else:
             pygame.draw.rect(self.screen, background, pygame.Rect(0, 0, self.screen_size[0], self.screen_size[1]))
+    def move_via_click_check(self, board_class):
+        """Checks for any squares being clicked, two have been, attempts that move"""
+        if self.get_square_pressed() != None:
+            if self.square_selected_one == None:
+                self.square_selected_one = self.get_square_pressed()
+            elif self.get_square_pressed() != self.square_selected_one and self.square_selected_one != None:
+                self.square_selected_two = self.get_square_pressed()
+        if self.square_selected_two != None:
+            print(self.board_notation)
+            move = self.board_notation[self.square_selected_one] + self.board_notation[self.square_selected_two]
+            if move == "e1g1" or move == "e8g8":
+                move = "o-o"
+            if move == "e1c1" or move == "e8c8":
+                move = "o-o-o"
+            print(move)
+            board_class.legal_move(move, False)
+            self.square_selected_one = None
+            self.square_selected_two = None
     def setup_background_squares(self):
         """Draws all background squares"""
         # importing modules
@@ -715,12 +746,13 @@ class Display:
         if whites_point_of_view:
             board_class.board_color.reverse()
             board_class.board.reverse()
-    def update_screen(self, board):
+    def update_screen(self, board, check_for_moves = True):
         """Updates the screen"""
         import pygame
         self.draw_background()
         self.setup_background_squares()
         self.draw_pieces(board, self.view_from_whites_perspective)
+        self.move_via_click_check(board)
         pygame.display.flip()
     def get_square_pressed(self):
         """Returns an index of which square is being pressed, if none are, None is returned"""
@@ -728,9 +760,18 @@ class Display:
         import pygame, math
         # iterating through all squares and checking if it is pressed
         for i in range(64):
+            # defining variables (to improve readability of the if statement)
+            square = self.drawn_background_squares[i]
+            square_end = (square[0] + square[2], square[1] + square[3])
+            mouse_x = pygame.mouse.get_pos()[0]
+            mouse_y = pygame.mouse.get_pos()[1]
             # checking if the mouse is within the dimension of the square, and if left click is being pressed
-            if pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][0] + (self.square_spacing_size * ((i % 8) + 1)) and pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][1] + (self.square_spacing_size * (math.floor(i / 8) + 1)) and pygame.mouse.get_pos()[1] <= self.drawn_background_squares[i][0] + self.drawn_background_squares[i][2] + (self.square_spacing_size * ((i % 8) + 1)) and pygame.mouse.get_pos()[1] <= self.drawn_background_squares[i][1] + self.drawn_background_squares[i][3] + (self.square_spacing_size * (math.floor(i / 8) + 1)) and pygame.mouse.get_pressed(3)[0]:
-                return True
+            if (pygame.mouse.get_pressed(3)[0]
+                    and square[0] <= mouse_x
+                    and square[1] <= mouse_y
+                    and square_end[0] >= mouse_x
+                    and square_end[1] >= mouse_y):
+                return i
         return None
     def quittable(self, board_class):
         """Mainly for testing"""
@@ -745,10 +786,5 @@ class Display:
                 if event.type == pygame.QUIT:
                     running = False
             self.update_screen(board_class)
-            """if self.get_square_pressed() != None:
-                print(self.get_square_pressed())"""
-            move = input("")
-            board_class.legal_move(move)
-boardy = Board()
-displaye = Display()
-displaye.quittable(boardy)
+            if self.get_square_pressed() != None:
+                print(self.get_square_pressed())
