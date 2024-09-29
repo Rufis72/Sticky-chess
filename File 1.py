@@ -499,58 +499,67 @@ class Board:
         # Defining variables
         # Checking if the move is castling, and if so skipping normal legal move check procedures (to prevent an error)
         if move[0] == "o":
+            # Castling for white
             if self.who_to_move() == "white":
                 if self.get_square_value("e1") == ("King", "white"):
+                    # Checks if white can legally short castle, then, if so, performs it
                     if self.errorless_index(self.get_legal_as_king("e1"), "o-o") and move == "o-o":
+                        # moving the Rook and King
                         self.move("e1g1")
                         self.move("h1f1")
+                        # removing castling rights
                         self.white_oo = False
                         self.white_ooo = False
                         return True
+                    # Checks if white can legally long castle, then, if so, performs it
                     if self.errorless_index(self.get_legal_as_king("e1"), "o-o-o") and move == "o-o-o":
+                        # moving the Rook and King
                         self.move("e1c1")
                         self.move("a1d1")
+                        # removing castling rights
                         self.white_oo = False
                         self.white_ooo = False
                         return True
             else:
+                # Castling for black
                 if self.get_square_value("e8") == ("King", "black"):
+                    # Checks if black can legally short castle, then, if so, performs it
                     if self.errorless_index(self.get_legal_as_king("e8"), "o-o") and move == "o-o":
+                        # moving the Rook and King
                         self.move("e8g8")
                         self.move("h8f8")
+                        # removing castling rights
                         self.black_oo = False
                         self.black_ooo = False
                         return True
+                    # Checks if black can legally long castle, then, if so, performs it
                     if self.errorless_index(self.get_legal_as_king("e8"), "o-o-o") and move == "o-o-o":
+                        # moving the Rook and King
                         self.move("e8c8")
                         self.move("a8d8")
+                        # removing castling rights
                         self.black_oo = False
                         self.black_ooo = False
                         return True
         # Checks for enpessant
         elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
+            # defining variables
             index_FL = self.get_index_via_notation(move[2:4])
+            # Checking enpessant for white
             if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
                 self.move(move)
                 self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
                 return True
+            # Checking enpessant for black
             if self.get_square_value(move[0:2])[1] == "black" and self.board[index_FL[0] + 1][index_FL[1]] == "Pawn":
                 self.move(move)
                 self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
                 return True
         # Checks for pawn promotion
-        if self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1]:
-            index_FL = self.get_index_via_notation(move[2:4])
-            if self.get_square_value(move[0:2])[1] == "white" and self.board[index_FL[0] - 1][index_FL[1]] == "Pawn":
-                self.move(move)
-                self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
-                return True
-            if self.get_square_value(move[0:2])[1] == "black" and self.board[index_FL[0] + 1][index_FL[1]] == "Pawn":
-                self.move(move)
-                self.clear_square(self.get_notation_via_index((index_FL[0] - 1, index_FL[1])))
-                return True
         if self.get_square_value(move[0:2])[0] == "Pawn" and move[3] == 7 and len(move) == 6 and move[4] == "=":
+            # makes initial move
             self.move(move[0:4])
+            # Changes the pawn to the piece its promoting to
             if move[5] == "B":
                 self.set_square_value(move[2:4], piece="Bishop")
             elif move[5] == "N":
@@ -567,6 +576,7 @@ class Board:
 
 
     def legal_moves(self, moves):
+        """Performs multiple legal moves passed in as a list or tuple"""
         returning = []
         for i in range(len(moves)):
             returning.append(self.legal_move(moves[i]))
@@ -575,6 +585,7 @@ class Display:
     import pygame, math
     def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0):
         import pygame
+        # Defining variables
         self.view_from_whites_perspective = if_view_from_whites_perspective
         self.square_one_color = square_one_color
         self.square_two_color = square_two_color
@@ -582,9 +593,7 @@ class Display:
         self.background = background
         self.frame = 0
         self.drawn_background_squares = []
-        pygame.init()
-        pygame.display.init()
-        self.screen = pygame.display.set_mode(screen_size)
+        # Defining variables - Math for scaling
         if grid_lines_size == 0:
             self.square_spacing_size = 0
         if self.screen_size[0] == screen_size[1]:
@@ -611,79 +620,111 @@ class Display:
             self.board_offset_x = self.square_spacing_size
             self.board_offset_y = self.square_spacing_size - (self.screen_size[0] - self.screen_size[1]) / 2
             self.square_edge_size = (screen_size[0] - (self.square_spacing_size * 9)) / 8
+        # Defining variables - creating a hashmap linking to loaded chess piece images
+        self.piece_locations = {
+            "black Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "black Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkBishop.png"),
+                                                   (self.square_edge_size, self.square_edge_size)),
+            "black Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKnight.png"),
+                                                   (self.square_edge_size, self.square_edge_size)),
+            "black Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkRook.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "black King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKing.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "black Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkQueen.png"),
+                                                  (self.square_edge_size, self.square_edge_size)),
+            "white Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightPawn.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "white Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKnight.png"),
+                                                   (self.square_edge_size, self.square_edge_size)),
+            "white Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightBishop.png"),
+                                                   (self.square_edge_size, self.square_edge_size)),
+            "white Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightRook.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "white King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKing.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "white Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightQueen.png"),
+                                                  (self.square_edge_size, self.square_edge_size))}
+        # Initializing pygame modules
+        pygame.init()
+        pygame.display.init()
+        # Initializing pygame modules - defining the screen
+        self.screen = pygame.display.set_mode(screen_size)
         pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size))
-        self.piece_locations = {"black Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size)),
-                                "black Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkBishop.png"), (self.square_edge_size, self.square_edge_size)),
-                                "black Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKnight.png"), (self.square_edge_size, self.square_edge_size)),
-                                "black Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkRook.png"), (self.square_edge_size, self.square_edge_size)),
-                                "black King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKing.png"), (self.square_edge_size, self.square_edge_size)),
-                                "black Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkQueen.png"), (self.square_edge_size, self.square_edge_size)),
-                                "white Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightPawn.png"), (self.square_edge_size, self.square_edge_size)),
-                                "white Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKnight.png"), (self.square_edge_size, self.square_edge_size)),
-                                "white Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightBishop.png"), (self.square_edge_size, self.square_edge_size)),
-                                "white Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightRook.png"), (self.square_edge_size, self.square_edge_size)),
-                                "white King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKing.png"), (self.square_edge_size, self.square_edge_size)),
-                                "white Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightQueen.png"), (self.square_edge_size, self.square_edge_size))}
         pygame.display.set_caption("Sticky Chess")
     def draw_background(self, background = "Nothing entered"):
+        """Draws a single color background"""
+        # importing modules
         import pygame
+        # Checking if nothing entered (then draws a background based off the global background variable)
         if background == "Nothing entered":
             background = self.background
-        pygame.draw.rect(self.screen, background, pygame.Rect(0, 0, self.screen_size[0], self.screen_size[1]))
+        # Draws a background based off the passed in background color
+        else:
+            pygame.draw.rect(self.screen, background, pygame.Rect(0, 0, self.screen_size[0], self.screen_size[1]))
     def setup_background_squares(self):
+        """Draws all background squares"""
+        # importing modules
         import pygame
+        # changing the checkerboard pattern's colors to make each square the same color for all players
         if self.view_from_whites_perspective:
             color_alternation = 1
         else:
             color_alternation = 0
+        # drawing all 64 squares
         for i in range(64):
+            # simulating a snaking pattern
             if i % 8 == 0:
                 color_alternation = (color_alternation + 1) % 2
             color_alternation = (color_alternation + 1) % 2
+            # drawing a square with the first color if the color_alternation variable is 0
             if color_alternation == 0:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_one_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size)))
+            # drawing a square with the second color if the color_alternation variable is 1
             else:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size)))
     def draw_pieces(self, board_class, whites_point_of_view = True):
+        """Draws pieces based off the class variables passed in"""
+        # importing modules
         import pygame
+        # reversing the board if viewing from whites perspective
         if whites_point_of_view:
             board_class.board_color.reverse()
             board_class.board.reverse()
         # Drawing all pieces
         for i in range(8):
             for n in range(8):
+                # bliting a chess piece image based off self.piece_locations and the data from the board_class parameter (the try is there incase the space is None, in which case, normally a IndexError would be returned)
                 try:
                     self.screen.blit(self.piece_locations.get(board_class.board_color[i][n] + " " + board_class.board[i][n]), ((n * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_x, (i * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_y))
                 except:
                     pass
-                else:
-                    try:
-                        self.screen.blit(
-                            self.piece_locations.get(board_class.board_color[i][n] + " " + board_class.board[i][n]), (
-                            (n * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_x,
-                            (i * (self.square_edge_size + self.square_spacing_size)) + self.board_offset_y))
-                    except:
-                        pass
+        # re-reversing the board to prevent constant switching between perspectives
         if whites_point_of_view:
             board_class.board_color.reverse()
             board_class.board.reverse()
     def update_screen(self, board):
+        """Updates the screen"""
         import pygame
         self.draw_background()
         self.setup_background_squares()
         self.draw_pieces(board, self.view_from_whites_perspective)
         pygame.display.flip()
-    def get_square_pressed(self, index):
-        """Returns True if a square is being pressed, both the mouse coordinates being on it, and the mouse being down."""
+    def get_square_pressed(self):
+        """Returns an index of which square is being pressed, if none are, None is returned"""
+        # importing modules
         import pygame
-        i = index
-        if ((pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][0] and
-            pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][1] and
-            pygame.mouse.get_pos()[0] <= self.drawn_background_squares[i][0] + self.drawn_background_squares[i][2] and
-            pygame.mouse.get_pos()[0] <= self.drawn_background_squares[i][1] + self.drawn_background_squares[i][3]) and
-            pygame.mouse.get_pressed(3)[0]):
-            return True
-        return False
+        # iterating through all squares and checking if it is pressed
+        for i in range(64):
+            # checking if the mouse is within the dimension of the square, and if left click is being pressed
+            if ((pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][0] and
+                pygame.mouse.get_pos()[0] >= self.drawn_background_squares[i][1] and
+                pygame.mouse.get_pos()[0] <= self.drawn_background_squares[i][0] + self.drawn_background_squares[i][2] and
+                pygame.mouse.get_pos()[0] <= self.drawn_background_squares[i][1] + self.drawn_background_squares[i][3]) and
+                pygame.mouse.get_pressed(3)[0]):
+                return i
+        return None
     def quittable(self, board_class):
         """Mainly for testing"""
         import pygame
@@ -699,8 +740,3 @@ class Display:
             self.update_screen(board_class)
             move = "e7e8=Q"
             board_class.legal_move(move)
-boardy = Board()
-displaye = Display()
-boardy.clear_board()
-boardy.set_square_value("e7", "white", "Pawn")
-displaye.quittable(boardy)
