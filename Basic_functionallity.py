@@ -39,10 +39,10 @@ class Board:
         self.black_ooo = True
 
 
-    def game_ended(self, side_won):
+    def game_ended(self, side_lost):
         """A method to run any neccesary code at the end of the game"""
         # Current code is temporary
-        print(f"Game over! {side_won} won!")
+        print(f"Game over! {side_lost} lost!")
         import sys
         sys.exit()
 
