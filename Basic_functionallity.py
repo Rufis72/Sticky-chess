@@ -244,9 +244,9 @@ class Board:
             except IndexError:
                 pass
             # Checking if the pawn can take
-            if self.board_color[index[0] + 1][index[1] + 1] == "black":
+            if index[1] != 7 and self.board_color[index[0] + 1][index[1] + 1] == "black":
                 moves.append((index[0] + 1, index[1] + 1))
-            if self.board_color[index[0] + 1][index[1] - 1] == "black":
+            if index[1] != 0 and self.board_color[index[0] + 1][index[1] - 1] == "black":
                 moves.append((index[0] + 1, index[1] - 1))
         else:
             # Checking moves if the pawn is black
@@ -265,9 +265,9 @@ class Board:
                 if index[1] - 1 == pawn_location[1] or index[1] + 1 == pawn_location[1]:
                     moves.append((pawn_location[0] - 1, pawn_location[1]))
             # Checking if the pawn can take
-            if self.board_color[index[0] - 1][index[1] + 1] == "white":
+            if index[1] != 7 and self.board_color[index[0] - 1][index[1] + 1] == "white":
                 moves.append((index[0] - 1, index[1] + 1))
-            if self.board_color[index[0] - 1][index[1] - 1] == "white":
+            if index[1] != 0 and self.board_color[index[0] - 1][index[1] - 1] == "white":
                 moves.append((index[0] - 1, index[1] - 1))
         # Checking if any squares are "illegal"
         i2 = 0
@@ -593,9 +593,10 @@ class Board:
         return returning
 class Display:
     import pygame, math
-    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0):
+    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0, square_selection_color = (255, 255, 0)):
         import pygame
         # Defining variables
+        self.square_selection_color = square_selection_color
         self.view_from_whites_perspective = if_view_from_whites_perspective
         self.square_one_color = square_one_color
         self.square_two_color = square_two_color
@@ -688,17 +689,14 @@ class Display:
         if self.get_square_pressed() != None:
             if self.square_selected_one == None:
                 self.square_selected_one = self.get_square_pressed()
-            elif self.get_square_pressed() != self.square_selected_one and self.square_selected_one != None:
-                self.square_selected_two = self.get_square_pressed()
-        if self.square_selected_two != None:
-            move = self.board_notation[self.square_selected_one] + self.board_notation[self.square_selected_two]
-            if move == "e1g1" or move == "e8g8":
-                move = "o-o"
-            if move == "e1c1" or move == "e8c8":
-                move = "o-o-o"
-            board_class.legal_move(move, False)
-            self.square_selected_one = None
-            self.square_selected_two = None
+            elif self.square_selected_one != self.get_square_pressed():
+                move = self.board_notation[self.square_selected_one] + self.board_notation[self.get_square_pressed()]
+                if move == "e1g1" or move == "e8g8":
+                    move = "o-o"
+                elif move == "e1c1" or move == "e8c8":
+                    move = "o-o-o"
+                board_class.legal_move(move, False)
+                self.square_selected_one = None
     def setup_background_squares(self):
         """Draws all background squares"""
         # importing modules
@@ -720,10 +718,11 @@ class Display:
             # drawing a square with the second color if the color_alternation variable is 1
             else:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size)))
+            # Drawing an outline (if the square is selected)
+            if i == self.square_selected_one:
+                pygame.draw.rect(self.screen, self.square_selection_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size), int(self.square_edge_size / 10))
     def draw_pieces(self, board_class, whites_point_of_view = True):
         """Draws pieces based off the class variables passed in"""
-        # importing modules
-        import pygame
         # reversing the board if viewing from whites perspective
         if whites_point_of_view:
             board_class.board_color.reverse()
@@ -767,16 +766,3 @@ class Display:
                     and square_end[1] >= mouse_y):
                 return i
         return None
-    def quittable(self, board_class):
-        """Mainly for testing"""
-        import pygame
-        running = True
-        # game loop
-        while running:
-            # for loop through the event queue
-            for event in pygame.event.get():
-
-                # Check for QUIT event
-                if event.type == pygame.QUIT:
-                    running = False
-            self.update_screen(board_class)
