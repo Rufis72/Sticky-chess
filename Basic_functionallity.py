@@ -38,6 +38,14 @@ class Board:
         self.black_oo = True
         self.black_ooo = True
 
+
+    def game_ended(self, side_won):
+        """A method to run any neccesary code at the end of the game"""
+        # Current code is temporary
+        print(f"Game over! {side_won} won!")
+        import sys
+        sys.exit()
+
     
     def get_notation_via_index(self, index):
         """Returns the notation based off an index"""
@@ -115,10 +123,13 @@ class Board:
                 self.black_oo = False
                 self.black_ooo = False
         # Changes the values of the board to align with the move
+        end_square_data = self.get_square_value(move[2:4])
         self.board[index2[0]][index2[1]] = self.board[index1[0]][index1[1]]
         self.board_color[index2[0]][index2[1]] = self.board_color[index1[0]][index1[1]]
         self.clear_square(move[0:2])
         self.player_moves.append(move)
+        if end_square_data[0] == "King":
+            self.game_ended(end_square_data[1])
 
     
     def get_seeing_as_bishop_at(self, notation):
