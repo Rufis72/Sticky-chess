@@ -2,6 +2,7 @@ class IllegalMove(Exception):
     """Illegal move error"""
     pass
 
+
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
     Terms:
@@ -302,7 +303,7 @@ class Board:
             moves.append((i, index[1]))
             if self.board[i][index[1]] != None:
                 break
-        for i in range(index[0] + 1, 1, 8):
+        for i in range(index[0] + 1, 8):
             moves.append((i, index[1]))
             if self.board[i][index[1]] != None:
                 break
@@ -311,7 +312,7 @@ class Board:
             moves.append((index[0], i))
             if self.board[index[0]][i] != None:
                 break
-        for i in range(index[1] + 1, 1, 8):
+        for i in range(index[1] + 1, 8):
             moves.append((index[0], i))
             if self.board[index[0]][i] != None:
                 break
@@ -468,6 +469,7 @@ class Board:
 
     def get_legal_moves(self, notation):
         import types
+        print(notation)
         """Returns all legal moves of a piece on a specific square (gotten via notation) (The moves are obtained by either getting what squares a piece sees, then vetting all the moves to remove the squares it cannot move to. Or uses the respective function to calculate that piece's legal moves)."""
         if notation[0] == "o": # Checks if the move is castling. (otherwise you get an error)
             piece = "King"
@@ -482,16 +484,19 @@ class Board:
         # Changes all squares to indexs
         if type(moves) != types.NoneType:
             for i in range(len(moves)):
-                moves[i] = self.get_index_via_notation(moves[i])
+                if moves[i] != "o-o" and moves[i] != "o-o-o":
+                    moves[i] = self.get_index_via_notation(moves[i])
             # Checking if any squares are "illegal"
             i2 = 0
             for i in range(len(moves)):
-                if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7 or self.get_square_value(notation)[1] == self.board_color[moves[i2][0]][moves[i2][1]]:
-                    del moves[i2]
-                    i2 -= 1
+                if moves[i2] != "o-o" and moves[i2] != "o-o-o":
+                    if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7 or self.get_square_value(notation)[1] == self.board_color[moves[i2][0]][moves[i2][1]]:
+                        del moves[i2]
+                        i2 -= 1
                 i2 += 1
             for i in range(len(moves)):
-                moves[i] = self.get_notation_via_index(moves[i])
+                if moves[i] != "o-o" and moves[i] != "o-o-o":
+                    moves[i] = self.get_notation_via_index(moves[i])
         return moves
 
 
@@ -604,7 +609,7 @@ class Board:
         return returning
 class Display:
     import pygame, math
-    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0, square_selection_color = (255, 255, 0)):
+    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0, square_selection_color = (255, 255, 0), allow_moves_as_opposite_colored_player = False):
         import pygame
         # Defining variables
         self.square_selection_color = square_selection_color
@@ -615,9 +620,9 @@ class Display:
         self.background = background
         self.frame = 0
         self.drawn_background_squares = []
+        self.allowed_moves_as_opposing_color = allow_moves_as_opposite_colored_player
         self.square_selected_one = None
-        self.square_selected_two = None
-        self.board_notation = ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+        self.board_notation_white = ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
                           "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
                           "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
                           "a3", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
@@ -625,6 +630,19 @@ class Display:
                           "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
                           "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
                           "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"]
+        self.board_notation_black = ["a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+                          "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+                          "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+                          "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+                          "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+                          "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+                          "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+                          "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"]
+        self.board_notation = []
+        if if_view_from_whites_perspective:
+            self.board_notation = self.board_notation_white
+        else:
+            self.board_notation = self.board_notation_black
         # Defining variables - Math for scaling
         if grid_lines_size == 0:
             self.square_spacing_size = 0
@@ -685,6 +703,14 @@ class Display:
         self.screen = pygame.display.set_mode(screen_size)
         pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size))
         pygame.display.set_caption("Sticky Chess")
+    def flip_viewing_angle(self):
+        self.view_from_whites_perspective = not self.view_from_whites_perspective
+        if self.view_from_whites_perspective:
+            self.board_notation = self.board_notation_white
+        else:
+            self.board_notation = self.board_notation_black
+        if self.square_selected_one != None:
+            self.square_selected_one = ((self.square_selected_one - 32) * -1) + 32
     def draw_background(self, background = "Nothing entered"):
         """Draws a single color background"""
         # importing modules
@@ -697,19 +723,44 @@ class Display:
             pygame.draw.rect(self.screen, background, pygame.Rect(0, 0, self.screen_size[0], self.screen_size[1]))
     def move_via_click_check(self, board_class):
         """Checks for any squares being clicked, two have been, attempts that move"""
+        var = self.allowed_moves_as_opposing_color or ((board_class.who_to_move() == "white" and self.view_from_whites_perspective) or (board_class.who_to_move() == "black" and not self.view_from_whites_perspective))
         if self.get_square_pressed() != None:
             if self.square_selected_one == None:
                 self.square_selected_one = self.get_square_pressed()
             elif self.square_selected_one != self.get_square_pressed():
+                print("rar")
                 move = self.board_notation[self.square_selected_one] + self.board_notation[self.get_square_pressed()]
                 if move == "e1g1" or move == "e8g8":
                     move = "o-o"
                 elif move == "e1c1" or move == "e8c8":
                     move = "o-o-o"
-                board_class.legal_move(move, False)
+                if var:
+                    board_class.legal_move(move, False)
                 self.square_selected_one = None
-    def setup_background_squares(self):
+    def get_legal_moves_preview(self, board_class, square_number):
+        """Returns all legal moves of a square based of square number"""
+        # getting all legal moves as notation
+        notation_moves = board_class.get_legal_moves(self.board_notation[square_number])
+        # changing all notation to square numbers
+        for i in range(len(notation_moves)):
+            if notation_moves[i] != "o-o" and notation_moves[i] != "o-o-o":
+                notation_moves[i] = self.board_notation.index(notation_moves[i])
+            elif notation_moves[i] == "o-o":
+                if board_class.who_to_move() == "white":
+                    notation_moves[i] = self.board_notation.index("g1")
+                else:
+                    notation_moves[i] = self.board_notation.index("g8")
+            else:
+                if board_class.who_to_move() == "white":
+                    notation_moves[i] = self.board_notation.index("c1")
+                else:
+                    notation_moves[i] = self.board_notation.index("c8")
+        return notation_moves
+    def setup_background_squares(self, show_legal_moves_preview = False, board_class = None):
         """Draws all background squares"""
+        # checking if anything needs to be passed in:
+        if show_legal_moves_preview and board_class == None:
+            raise Exception("If showing legal move previews, board_class needs to be passed in!")
         # importing modules
         import pygame, math
         # changing the checkerboard pattern's colors to make each square the same color for all players
@@ -729,9 +780,38 @@ class Display:
             # drawing a square with the second color if the color_alternation variable is 1
             else:
                 self.drawn_background_squares.append(pygame.draw.rect(self.screen, self.square_two_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size)))
-            # Drawing an outline (if the square is selected)
+            # drawing an outline (if the square is selected)
             if i == self.square_selected_one:
                 pygame.draw.rect(self.screen, self.square_selection_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size), int(self.square_edge_size / 10))
+            # showing any previews of legal moves (if paramater to do so is true)
+            if show_legal_moves_preview and self.square_selected_one != None:
+                moves = self.get_legal_moves_preview(board_class, self.square_selected_one)
+                # changing castling to show highlighted squares instead
+                if board_class.who_to_move() == "white":
+                    try:
+                        moves[moves.index("o-o")] == "g1"
+                    except:
+                        try:
+                            moves[moves.index("o-o-o")] == "c1"
+                        except:
+                            pass
+                else:
+                    try:
+                        moves[moves.index("o-o")] == "g8"
+                    except:
+                        try:
+                            moves[moves.index("o-o-o")] == "c8"
+                        except:
+                            pass
+                # checking if the correct piece is moving, and is allowed to be moved by this player
+                if (self.allowed_moves_as_opposing_color or ((board_class.who_to_move() == "white" and self.view_from_whites_perspective) or (board_class.who_to_move() == "black" and not self.view_from_whites_perspective))) and board_class.who_to_move() == board_class.get_square_value(self.board_notation[self.square_selected_one])[1]:
+                    try:
+                        # print(self.get_legal_moves_preview(board_class, self.square_selected_one))
+                        if moves.index(i) != None:
+                            # drawing the circle
+                            pygame.draw.circle(self.screen, (128, 128, 128), (self.drawn_background_squares[-1][0] + (self.square_edge_size / 2), self.drawn_background_squares[-1][1] + (self.square_edge_size / 2)), 30)
+                    except:
+                        pass
     def draw_pieces(self, board_class, whites_point_of_view = True):
         """Draws pieces based off the class variables passed in"""
         # reversing the board if viewing from whites perspective
@@ -750,11 +830,11 @@ class Display:
         if whites_point_of_view:
             board_class.board_color.reverse()
             board_class.board.reverse()
-    def update_screen(self, board, check_for_moves = True):
+    def update_screen(self, board, show_legal_moves_from_selected_piece = False):
         """Updates the screen"""
         import pygame
         self.draw_background()
-        self.setup_background_squares()
+        self.setup_background_squares(show_legal_moves_from_selected_piece, board)
         self.draw_pieces(board, self.view_from_whites_perspective)
         self.move_via_click_check(board)
         pygame.display.flip()
