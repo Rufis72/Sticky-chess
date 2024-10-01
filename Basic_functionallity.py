@@ -403,7 +403,7 @@ class Board:
         # Checking if any squares have friendly pieces on them
         for i in range(len(moves) - 1, -1, -1):
             if moves[i] != "o-o" and moves[i] != "o-o-o":
-                if self.get_square_value(moves[i])[1] != self.get_square_value(notation)[1]:
+                if self.get_square_value(moves[i])[1] == self.get_square_value(notation)[1]:
                     del moves[i]
         return moves
     
@@ -471,7 +471,6 @@ class Board:
 
     def get_legal_moves(self, notation):
         import types
-        print(notation)
         """Returns all legal moves of a piece on a specific square (gotten via notation) (The moves are obtained by either getting what squares a piece sees, then vetting all the moves to remove the squares it cannot move to. Or uses the respective function to calculate that piece's legal moves)."""
         if notation[0] == "o": # Checks if the move is castling. (otherwise you get an error)
             piece = "King"
@@ -730,7 +729,6 @@ class Display:
             if self.square_selected_one == None:
                 self.square_selected_one = self.get_square_pressed()
             elif self.square_selected_one != self.get_square_pressed():
-                print("rar")
                 move = self.board_notation[self.square_selected_one] + self.board_notation[self.get_square_pressed()]
                 if move == "e1g1" or move == "e8g8":
                     move = "o-o"
@@ -808,7 +806,6 @@ class Display:
                 # checking if the correct piece is moving, and is allowed to be moved by this player
                 if (self.allowed_moves_as_opposing_color or ((board_class.who_to_move() == "white" and self.view_from_whites_perspective) or (board_class.who_to_move() == "black" and not self.view_from_whites_perspective))) and board_class.who_to_move() == board_class.get_square_value(self.board_notation[self.square_selected_one])[1]:
                     try:
-                        # print(self.get_legal_moves_preview(board_class, self.square_selected_one))
                         if moves.index(i) != None:
                             # drawing the circle
                             pygame.draw.circle(self.screen, (128, 128, 128), (self.drawn_background_squares[-1][0] + (self.square_edge_size / 2), self.drawn_background_squares[-1][1] + (self.square_edge_size / 2)), 30)
