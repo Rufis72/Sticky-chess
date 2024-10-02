@@ -1,8 +1,7 @@
 from Basic_functionallity import Display, Board
 import pygame, sys
 board = Board()
-board.legal_moves(["e2e4", "e7e5", "f1c4", "f8c5", "g1f3", "g8f6"])
-display = Display(allow_moves_as_opposite_colored_player=True)
+display = Display()
 clock = pygame.time.Clock()
 flip_each_time = True
 color_to_move = "white"
