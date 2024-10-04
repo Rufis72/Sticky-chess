@@ -2,14 +2,12 @@ class IllegalMove(Exception):
     """Illegal move error"""
     pass
 
-
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
     Terms:
     Notation: A string used to represent a square in chess
     Index: Typically used to represent the acutal location of a square's information"""
     def __init__(self):
-        self.temp_move_data = None
         self.board = [["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"],
                  ["Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn"],
                  [None, None, None, None, None, None, None, None],
@@ -41,10 +39,10 @@ class Board:
         self.black_ooo = True
 
 
-    def game_ended(self, side_lost):
+    def game_ended(self, side_won):
         """A method to run any neccesary code at the end of the game"""
         # Current code is temporary
-        print(f"Game over! {side_lost} lost!")
+        print(f"Game over, {side_won} won!")
         import sys
         sys.exit()
 
@@ -140,7 +138,7 @@ class Board:
         self.clear_square(move[0:2])
         self.player_moves.append(move)
         if end_square_data[0] == "King":
-            self.game_ended(end_square_data[1])
+            self.game_ended(piece_values[1])
 
     
     def get_seeing_as_bishop_at(self, notation):
@@ -627,7 +625,6 @@ class Board:
             returning.append(self.legal_move(moves[i]))
         return returning
 class Display:
-    import pygame, math
     def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0, square_selection_color = (255, 255, 0), allow_moves_as_opposite_colored_player = False, legal_move_circle_indicator_size = 0.7):
         import pygame
         # Defining variables
