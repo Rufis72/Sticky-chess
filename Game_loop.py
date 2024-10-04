@@ -7,9 +7,6 @@ flip_each_time = False
 debugging_keycodes = True
 color_to_move = "white"
 max_fps = 60
-board.clear_board()
-board.set_square_value("e8", "white", "Rook")
-board.set_square_value("g8", "black", "King")
 pressed = []
 while True:
     clock.tick(max_fps)

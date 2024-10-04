@@ -747,7 +747,7 @@ class Display:
         if self.get_square_pressed() != None:
             if self.square_selected_one == None:
                 self.square_selected_one = self.get_square_pressed()
-            elif self.square_selected_one != self.get_square_pressed():
+            elif self.square_selected_one != self.get_square_pressed() and board_class.get_square_value(self.square_selected_one[0:2])[0] == "King":
                 move = self.board_notation[self.square_selected_one] + self.board_notation[self.get_square_pressed()]
                 if move == "e1g1" or move == "e8g8":
                     move = "o-o"
