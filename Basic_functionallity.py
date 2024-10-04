@@ -9,6 +9,7 @@ class Board:
     Notation: A string used to represent a square in chess
     Index: Typically used to represent the acutal location of a square's information"""
     def __init__(self):
+        self.temp_move_data = None
         self.board = [["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"],
                  ["Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn"],
                  [None, None, None, None, None, None, None, None],
@@ -46,6 +47,15 @@ class Board:
         print(f"Game over! {side_lost} lost!")
         import sys
         sys.exit()
+
+
+    def find_piece(self, piece = "all", color = "any"):
+        output = []
+        for i in range(8):
+            for n in range(8):
+                if (piece == "all" or self.board[i][n] == piece) and (color == "any" or self.board_color[i][n] == color):
+                    output.append(self.get_notation_via_index((i, n)))
+        return output
 
     
     def get_notation_via_index(self, index):
@@ -227,8 +237,6 @@ class Board:
             self.board_color[index[0]][index[1]] = color
         if piece != None:
             self.board[index[0]][index[1]] = piece
-        if piece == None and color == None:
-            raise TypeError("No square changed")
 
     def get_legal_as_pawn_at(self, notation):
         """Returns all possible legal moves a pawn could make from a square (the passed in notation)."""
@@ -458,13 +466,25 @@ class Board:
                 except:
                     pass
         if color != None:
-            i2 = 0
-            for i in range(len(pieces_locations)):
-                if self.get_square_value(pieces_locations[i2])[1] != color:
-                    del pieces_locations[i2]
-                    i2 -= 1
-                i2 += 1
+            for i in range(len(pieces_locations) - 1, -1, -1):
+                if self.get_square_value(pieces_locations[i])[1] != color:
+                    del pieces_locations[i]
         return pieces_locations
+
+
+    def temp_move(self, move):
+        self.temp_move_data = [self.white_oo, self.white_ooo, self.black_oo, self.black_ooo, self.get_square_value(move[2:4]), move]
+        self.move(move)
+
+
+    def undo_temp_move(self):
+        self.move(self.temp_move_data[5][2:4] + self.temp_move_data[5][0:2])
+        self.white_oo = self.temp_move_data[0]
+        self.white_ooo = self.temp_move_data[1]
+        self.black_oo = self.temp_move_data[2]
+        self.black_ooo = self.temp_move_data[3]
+        self.set_square_value(self.temp_move_data[5][2:4], self.temp_move_data[4][0], self.temp_move_data[4][1])
+
 
 
     def get_legal_moves(self, notation):
