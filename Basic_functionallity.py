@@ -2,6 +2,7 @@ class IllegalMove(Exception):
     """Illegal move error"""
     pass
 
+
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
     Terms:
@@ -113,13 +114,13 @@ class Board:
         if piece_values[0] == "Rook":
             # Changing the castling values based off the rook (Checks if it's in a corner (Where rooks start off) and if so, changes if the color that side belongs to can castle on that side)
             if index1 == (0, 0):
-                self.white_oo = False
-            elif index1 == (7, 0):
-                self.black_oo = False
-            elif index1 == (7, 0):
                 self.white_ooo = False
-            elif index1 == (7, 7):
+            elif index1 == (7, 0):
                 self.black_ooo = False
+            elif index1 == (7, 0):
+                self.white_oo = False
+            elif index1 == (7, 7):
+                self.black_oo = False
         # Checking if the piece is a king
         if piece_values[0] == "King":
             # Changes one sides castling rights to all be false
