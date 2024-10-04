@@ -2,8 +2,6 @@ class IllegalMove(Exception):
     """Illegal move error"""
     pass
 
-# TODO kings cannot move except castling, sometimes piece legal move previews will be completely off, add scaling to legal move preview circles (radius = 1/4 of square edge size
-
 
 class Board:
     """Used to edit the board, get legal moves, and other associated proccessess.
@@ -66,7 +64,7 @@ class Board:
                 self.board_color[self.get_index_via_notation(notation)[0]][self.get_index_via_notation(notation)[1]])
 
 
-    def if_white_can_enpessant_this_move(self):
+    def if_white_could_enpessant_this_move(self):
         """Returns True if there is a black pawn that has advanced two squares, otherwise returns False"""
         if len(self.player_moves) == 0:
             return False
@@ -77,7 +75,7 @@ class Board:
             return False
 
 
-    def if_black_can_enpessant_this_move(self):
+    def if_black_could_enpessant_this_move(self):
         """Returns True if there is a white pawn that has advanced two squares, otherwise returns False."""
         if len(self.player_moves) == 0:
             return False
@@ -196,7 +194,7 @@ class Board:
         except:
             return None
     
-    
+
     def get_seeing_as_pawn_at(self, notation):
         """Returns all squares a pawn can see (any square it protects)."""
         # Defining variables
@@ -251,9 +249,9 @@ class Board:
                 pass
             try:
                 # Checking for Enpessant
-                if self.if_white_can_enpessant_this_move():
+                if self.if_white_could_enpessant_this_move():
                     pawn_location = self.get_index_via_notation(self.player_moves[-1][2:4])
-                    if index[1] - 1 == pawn_location[1] or index[1] + 1 == pawn_location[1]:
+                    if (index[1] - 1 == pawn_location[1] or index[1] + 1 == pawn_location[1]) and index[0] == pawn_location[0]:
                         moves.append((pawn_location[0] + 1, pawn_location[1]))
             except IndexError:
                 pass
@@ -274,9 +272,9 @@ class Board:
             except:
                 pass
             # Checking for Enpessant
-            if self.if_black_can_enpessant_this_move():
+            if self.if_black_could_enpessant_this_move():
                 pawn_location = self.get_index_via_notation(self.player_moves[-1][2:4])
-                if index[1] - 1 == pawn_location[1] or index[1] + 1 == pawn_location[1]:
+                if (index[1] - 1 == pawn_location[1] or index[1] + 1 == pawn_location[1]) and index[0] == pawn_location[0]:
                     moves.append((pawn_location[0] - 1, pawn_location[1]))
             # Checking if the pawn can take
             if index[1] != 7 and self.board_color[index[0] - 1][index[1] + 1] == "white":
@@ -566,7 +564,7 @@ class Board:
                         self.black_ooo = False
                         return True
         # Checks for enpessant (en peasant)
-        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1] and (self.if_white_can_enpessant_this_move() or self.if_black_can_enpessant_this_move()):
+        elif self.get_square_value(move[0:2])[0] == "Pawn" and self.get_square_value(move[2:4])[0] == None and move[0] != move[2] and self.who_to_move() == self.get_square_value(move[0:2])[1] and (self.if_white_could_enpessant_this_move() or self.if_black_could_enpessant_this_move()):
             # defining variables
             index_FL = self.get_index_via_notation(move[2:4])
             # Checking enpessant for white
@@ -610,7 +608,7 @@ class Board:
         return returning
 class Display:
     import pygame, math
-    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0, square_selection_color = (255, 255, 0), allow_moves_as_opposite_colored_player = False):
+    def __init__(self, square_one_color = (125, 148, 93), square_two_color = (238, 238, 213), screen_size = (700, 700), background = (0, 0, 0), if_view_from_whites_perspective = True, grid_lines_size = 0, square_selection_color = (255, 255, 0), allow_moves_as_opposite_colored_player = False, legal_move_circle_indicator_size = 0.7):
         import pygame
         # Defining variables
         self.square_selection_color = square_selection_color
@@ -639,6 +637,7 @@ class Display:
                           "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
                           "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
                           "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"]
+        self.move_preview_circle_percentage = legal_move_circle_indicator_size
         self.board_notation = []
         if if_view_from_whites_perspective:
             self.board_notation = self.board_notation_white
@@ -808,7 +807,7 @@ class Display:
                     try:
                         if moves.index(i) != None:
                             # drawing the circle
-                            pygame.draw.circle(self.screen, (128, 128, 128), (self.drawn_background_squares[-1][0] + (self.square_edge_size / 2), self.drawn_background_squares[-1][1] + (self.square_edge_size / 2)), 30)
+                            pygame.draw.circle(self.screen, (128, 128, 128, 128), (self.drawn_background_squares[-1][0] + (self.square_edge_size / 2), self.drawn_background_squares[-1][1] + (self.square_edge_size / 2)), (self.square_edge_size / 2) * self.move_preview_circle_percentage)
                     except:
                         pass
     def draw_pieces(self, board_class, whites_point_of_view = True):
