@@ -747,12 +747,15 @@ class Display:
         if self.get_square_pressed() != None:
             if self.square_selected_one == None:
                 self.square_selected_one = self.get_square_pressed()
-            elif self.square_selected_one != self.get_square_pressed() and board_class.get_square_value(self.square_selected_one[0:2])[0] == "King":
+            elif self.square_selected_one != self.get_square_pressed():
+
                 move = self.board_notation[self.square_selected_one] + self.board_notation[self.get_square_pressed()]
-                if move == "e1g1" or move == "e8g8":
-                    move = "o-o"
-                elif move == "e1c1" or move == "e8c8":
-                    move = "o-o-o"
+                # checking if the piece is a king
+                if board_class.get_square_value(self.board_notation[self.square_selected_one])[0] == "King":
+                    if move == "e1g1" or move == "e8g8":
+                        move = "o-o"
+                    elif move == "e1c1" or move == "e8c8":
+                        move = "o-o-o"
                 if var:
                     board_class.legal_move(move, False)
                 self.square_selected_one = None
