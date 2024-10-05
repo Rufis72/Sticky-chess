@@ -1,10 +1,11 @@
 from Basic_functionallity import Display, Board
 import pygame, sys
+# creating class instances
 board = Board()
-display = Display(allow_moves_as_opposite_colored_player=True)
+display = Display(allow_moves_as_opposite_colored_player=True, screen_size=(800, 800))
+# defining variables
 clock = pygame.time.Clock()
 flip_each_time = False
-debugging_keycodes = True
 color_to_move = "white"
 max_fps = 60
 pressed = []
@@ -14,7 +15,7 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
         # checking if debugging keycodes is enabled, if any key is down, and if the key is d (to enable all debugging you need to hold d)
-        if debugging_keycodes and event.type == pygame.KEYDOWN and pygame.key.get_pressed()[pygame.K_d]:
+        if event.type == pygame.KEYDOWN and pygame.key.get_pressed()[pygame.K_d]:
             import pyperclip
             # debugging keycodes
             # copying moves to clipboard
@@ -26,6 +27,7 @@ while True:
             # copying board colors to clipboard
             if event.key == pygame.K_c: # c for board
                 pyperclip.copy(board.board_color)
+    # logic for flipping the board (if enabled)
     if flip_each_time:
         if board.who_to_move() != color_to_move:
             display.flip_viewing_angle()
