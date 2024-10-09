@@ -1,5 +1,5 @@
 # importing modules
-import pygame, sys, types, math, typing
+import pygame, sys, types, math, typing, copy
 
 
 class IllegalMove(Exception):
@@ -37,6 +37,7 @@ class Board:
                           ["a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"],
                           ["a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7"],
                           ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"]]
+        self.is_copy = False
         self.player_moves = []
         self.white_oo = True
         self.white_ooo = True
@@ -44,33 +45,59 @@ class Board:
         self.black_ooo = True
 
 
-    def game_ended(self, side_won):
+    def game_ended(self, side_won: str):
         """A method to run any neccesary code at the end of the game"""
         # Current code is temporary
         print(f"Game over, {side_won} won!")
         sys.exit()
 
 
-    def find_piece(self, piece = "all", color = "any"):
+    def create_instance_copy(self):
+        """A method to create a instance copy of self"""
+        # creating the copy
+        c_copy = copy.deepcopy(self)
+        # changing its values (to prevent deletion of main board)
+        c_copy.is_copy = True
+        return c_copy
+
+
+    def del_instance_copy(self):
+        """Deletes an (ONLY) instance copy (the one its being ran in)"""
+        # checking if the instance is a copy
+        if self.is_copy:
+            # deleting the copy
+            del self
+        else:
+            # raising an error if it is the main board
+            raise Exception("Cannot (should not) delete any non instance (main) boards")
+
+
+    def find_piece(self, piece: str = "all", color: str = "any"):
+        """Returns all squares that have pieces that fulfill the entered criteria"""
+        # defining variables
         output = []
+        # looping through every square
         for i in range(8):
             for n in range(8):
+                # checking if that squares data fits the criteria
                 if (piece == "all" or self.board[i][n] == piece) and (color == "any" or self.board_color[i][n] == color):
+                    # appending the square to the output list
                     output.append(self.get_notation_via_index((i, n)))
+        # returning a list of all squares that meet the criteria
         return output
 
     
-    def get_notation_via_index(self, index):
+    def get_notation_via_index(self, index: typing.Tuple):
         """Returns the notation based off an index"""
         return self.board_notation[index[0]][index[1]]
     
     
-    def get_index_via_notation(self, notation):
+    def get_index_via_notation(self, notation: str):
         """Returns the index based off a notation."""
         return (int(notation[1]) - 1, self.board_notation[int(notation[1]) - 1].index(notation))
 
 
-    def get_square_value(self, notation):
+    def get_square_value(self, notation: str):
         "Returns the value of a square based off a notation. The data will be returned in a tuple consisting of 1st: the piece on that square, and 2nd: the piece's color."
         return (self.board[self.get_index_via_notation(notation)[0]][self.get_index_via_notation(notation)[1]],
                 self.board_color[self.get_index_via_notation(notation)[0]][self.get_index_via_notation(notation)[1]])
@@ -97,7 +124,7 @@ class Board:
             return False
 
     
-    def clear_square(self, notation):
+    def clear_square(self, notation: str):
         """Removes all data from a square based off notation."""
         if type(notation) == str:
             notation = [notation]
@@ -107,7 +134,7 @@ class Board:
             self.board_color[index[0]][index[1]] = None
 
 
-    def move(self, move):
+    def move(self, move: str):
         """Performs ANY move (Copys the contents of one square to another, and clears the first squares data), also updates castling rights if a rook or king has moved."""
         # Defining variables
         index1 = self.get_index_via_notation(move[0:2])
@@ -147,7 +174,7 @@ class Board:
             self.game_ended(piece_values[1])
 
     
-    def get_seeing_as_bishop_at(self, notation):
+    def get_seeing_as_bishop_at(self, notation: str):
         """Returns all squares that a bishop would see (all squares it can move to, plus any that it protects) at the passed in square (notation)."""
         # Defining variables
         index = self.get_index_via_notation(notation)
@@ -201,15 +228,18 @@ class Board:
         return moves
 
 
-    def errorless_index(self, list_0, index_0):
+    def errorless_index(self, list: list, index_0: typing.Tuple):
         """Performs the same action as '.index', but instead of returning an error if an item is not found, it will instead return none."""
+        # attempting to index the item
         try:
-            return list_0.index(index_0)
+            # returning the index
+            return list.index(index_0)
         except:
+            # returning None since the index reutrned an error
             return None
     
 
-    def get_seeing_as_pawn_at(self, notation):
+    def get_seeing_as_pawn_at(self, notation: str):
         """Returns all squares a pawn can see (any square it protects)."""
         # Defining variables
         index = self.get_index_via_notation(notation)
@@ -235,14 +265,14 @@ class Board:
         return moves
 
 
-    def set_square_value(self, notation, color = None, piece = None):
+    def set_square_value(self, notation: str, color: typing.Tuple = None, piece: str = None):
         index = self.get_index_via_notation(notation)
         if color != None:
             self.board_color[index[0]][index[1]] = color
         if piece != None:
             self.board[index[0]][index[1]] = piece
 
-    def get_legal_as_pawn_at(self, notation):
+    def get_legal_as_pawn_at(self, notation: str):
         """Returns all possible legal moves a pawn could make from a square (the passed in notation)."""
         # Defining variables
         index = self.get_index_via_notation(notation)
@@ -316,7 +346,7 @@ class Board:
         return moves
 
 
-    def get_seeing_as_rook_at(self, notation):
+    def get_seeing_as_rook_at(self, notation: str):
         """Returns all squares a rook at notation could see"""
         # Defining variables
         index = self.get_index_via_notation(notation)
@@ -349,11 +379,11 @@ class Board:
         return moves
 
 
-    def get_seeing_as_queen_at(self, notation):
+    def get_seeing_as_queen_at(self, notation: str):
         return [*self.get_seeing_as_rook_at(notation), *self.get_seeing_as_bishop_at(notation)]
 
     
-    def get_seeing_as_knight_at(self, notation):
+    def get_seeing_as_knight_at(self, notation: str):
         """Returns all legal squares a knight could move to from a certain square (The passed in notation)."""
         # Defining variables
         index = self.get_index_via_notation(notation)
@@ -378,7 +408,7 @@ class Board:
         return moves
 
 
-    def get_seeing_as_king(self, notation):
+    def get_seeing_as_king(self, notation: str):
         """Returns all squares a king protects from a certain square (the passed in notation)."""
         # Defining variables
         moves = []
@@ -403,7 +433,7 @@ class Board:
         return moves
 
 
-    def get_legal_as_king(self, notation):
+    def get_legal_as_king(self, notation: str):
         """Returns all possible legal moves as a king from a certain square (the passed in notation)."""
         # Getting all "typical" (moving to all adjacent squares) king moves
         moves = [*self.get_seeing_as_king(notation)]
@@ -429,7 +459,7 @@ class Board:
         return moves
     
     
-    def get_piece_seeing(self, notation):
+    def get_piece_seeing(self, notation: str):
         """Checks the value of square (gotten from notation), then gets what that piece sees (via checking the value of the square, then running that piece's respective function to get what it sees)."""
         index = self.get_index_via_notation(notation)
         piece = self.get_square_value(notation)[0]
@@ -464,12 +494,14 @@ class Board:
 
 
     def clear_board(self):
+        """Removes the data of all squares on the board"""
         for i in range(len(self.board)):
             for n in range(len(self.board[i])):
                 self.board[i][n] = None
+                self.board_color[i][n] = None
 
 
-    def get_pieces_seeing(self, notation, color = None):
+    def get_pieces_seeing(self, notation: str, color: typing.Tuple = None):
         """Returns the squares off all pieces seeing a certain square (the square in question is gotten from notation), color removes all pieces that are not of one color"""
         pieces_locations = []
         for i in range(8):
@@ -486,22 +518,8 @@ class Board:
         return pieces_locations
 
 
-    def temp_move(self, move):
-        self.temp_move_data = [self.white_oo, self.white_ooo, self.black_oo, self.black_ooo, self.get_square_value(move[2:4]), move]
-        self.move(move)
 
-
-    def undo_temp_move(self):
-        self.move(self.temp_move_data[5][2:4] + self.temp_move_data[5][0:2])
-        self.white_oo = self.temp_move_data[0]
-        self.white_ooo = self.temp_move_data[1]
-        self.black_oo = self.temp_move_data[2]
-        self.black_ooo = self.temp_move_data[3]
-        self.set_square_value(self.temp_move_data[5][2:4], self.temp_move_data[4][0], self.temp_move_data[4][1])
-
-
-
-    def get_legal_moves(self, notation):
+    def get_legal_moves(self, notation: str):
         """Returns all legal moves of a piece on a specific square (gotten via notation) (The moves are obtained by either getting what squares a piece sees, then vetting all the moves to remove the squares it cannot move to. Or uses the respective function to calculate that piece's legal moves)."""
         if notation[0] == "o": # Checks if the move is castling. (otherwise you get an error)
             piece = "King"
@@ -540,7 +558,7 @@ class Board:
             return "black"
 
 
-    def legal_move(self, move, raise_error_if_illegal = True):
+    def legal_move(self, move: str, raise_error_if_illegal: typing.Tuple = True):
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
         # Basic check for illegal moves
         if raise_error_if_illegal:
@@ -635,15 +653,17 @@ class Board:
             return False
 
 
-    def legal_moves(self, moves):
+    def legal_moves(self, moves: list):
         """Performs multiple legal moves passed in as a list or tuple"""
         # defining variables
         returning = []
         for i in range(len(moves)):
             returning.append(self.legal_move(moves[i]))
         return returning
+
+
 class Display:
-    def __init__(self, square_one_color: typing.Tuple = (125, 148, 93), square_two_color: typing.Tuple = (238, 238, 213), screen_size: typing.Tuple = (700, 700), background: typing.Tuple = (0, 0, 0), if_view_from_whites_perspective: bool = True, grid_lines_size: int = 0, square_selection_color: typing.Tuple = (255, 255, 0), allow_moves_as_opposite_colored_player: bool = False, legal_move_circle_indicator_size: float = 0.7):
+    def __init__(self, square_one_color: typing.Tuple = (125, 148, 93), square_two_color: typing.Tuple = (238, 238, 213), screen_size: typing.Tuple = (700, 700), background: typing.Tuple = (0, 0, 0), if_view_from_whites_perspective: bool = True, grid_lines_size: int = 0, square_selection_color: typing.Tuple = (255, 255, 0), allow_moves_as_opposite_colored_player: bool = False, legal_move_circle_indicator_size: float = 0.7, show_legal_moves_preview: bool = True):
         # Defining variables
         self.square_selection_color = square_selection_color
         self.view_from_whites_perspective = if_view_from_whites_perspective
@@ -655,6 +675,7 @@ class Display:
         self.drawn_background_squares = []
         self.allowed_moves_as_opposing_color = allow_moves_as_opposite_colored_player
         self.square_selected_one = None
+        self.show_legal_moves_preview = show_legal_moves_preview
         self.board_notation_white = ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
                           "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
                           "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
@@ -737,6 +758,8 @@ class Display:
         self.screen = pygame.display.set_mode(screen_size)
         pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size))
         pygame.display.set_caption("Sticky Chess")
+
+
     def flip_viewing_angle(self):
         """Flips the viewing angle to the opposing color"""
         self.view_from_whites_perspective = not self.view_from_whites_perspective
@@ -746,6 +769,8 @@ class Display:
             self.board_notation = self.board_notation_black
         if self.square_selected_one != None:
             self.square_selected_one = ((self.square_selected_one - 32) * -1) + 32
+
+
     def draw_background(self, background: typing.Tuple = "Nothing entered"):
         """Draws a single color background"""
         # Checking if nothing entered (then draws a background based off the global background variable)
@@ -754,6 +779,8 @@ class Display:
         # Draws a background based off the passed in background color
         else:
             self.screen.fill(background)
+
+
     def move_via_click_check(self, board_class):
         """Checks for any squares being clicked, two have been, attempts that move"""
         var = self.allowed_moves_as_opposing_color or ((board_class.who_to_move() == "white" and self.view_from_whites_perspective) or (board_class.who_to_move() == "black" and not self.view_from_whites_perspective))
@@ -772,6 +799,8 @@ class Display:
                 if var:
                     board_class.legal_move(move, False)
                 self.square_selected_one = None
+
+
     def get_legal_moves_preview(self, board_class, square_number: int):
         """Returns all legal moves of a square based of square number"""
         # getting all legal moves as notation
@@ -791,6 +820,8 @@ class Display:
                 else:
                     notation_moves[i] = self.board_notation.index("c8")
         return notation_moves
+
+
     def setup_background_squares(self, show_legal_moves_preview: bool = False, board_class = None):
         """Draws all background squares"""
         # checking if anything needs to be passed in:
@@ -844,6 +875,8 @@ class Display:
                             pygame.draw.circle(self.screen, (128, 128, 128, 128), (self.drawn_background_squares[-1][0] + (self.square_edge_size / 2), self.drawn_background_squares[-1][1] + (self.square_edge_size / 2)), (self.square_edge_size / 2) * self.move_preview_circle_percentage)
                     except:
                         pass
+
+
     def draw_pieces(self, board_class, whites_point_of_view: bool = True):
         """Draws pieces based off the class variables passed in"""
         # reversing the board if viewing from whites perspective
@@ -862,6 +895,8 @@ class Display:
         if whites_point_of_view:
             board_class.board_color.reverse()
             board_class.board.reverse()
+
+
     def update_screen(self, board_class, show_legal_moves_from_selected_piece: bool = False):
         """Updates the screen"""
         self.draw_background()
@@ -869,6 +904,8 @@ class Display:
         self.draw_pieces(board_class, self.view_from_whites_perspective)
         self.move_via_click_check(board_class)
         pygame.display.flip()
+
+
     def get_square_pressed(self):
         """Returns an index of which square is being pressed, if none are, None is returned"""
         # iterating through all squares and checking if it is pressed
