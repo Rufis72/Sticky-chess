@@ -923,3 +923,83 @@ class Display:
                     and square_end[1] >= mouse_y):
                 return i
         return None
+
+
+class Bot:
+    def __init__(self, depth: int):
+        self.depth = depth
+
+
+    def get_white_material_advantage(self, board_class):
+        """Returns the material advantage of white"""
+        # defining variables
+        white_material_advantage = 0
+        # calculating the advantage
+        # cycling through every square
+        for i in range(8):
+            for n in range(8):
+                # checking if the piece is white
+                if board_class.board_color[i, n] == "white":
+                    # adding the material value to the score
+                    if board_class.board[i, n] == "Pawn":
+                        white_material_advantage += 1
+                    elif board_class.board[i, n] == "Knight":
+                        white_material_advantage += 3
+                    elif board_class.board[i, n] == "Bishop":
+                        white_material_advantage += 3
+                    elif board_class.board[i, n] == "Rook":
+                        white_material_advantage += 5
+                    elif board_class.board[i, n] == "Queen":
+                        white_material_advantage += 9
+                # removing blacks material points from the score
+                elif board_class.board_color[i, n] != None:
+                    # subtracting the material value from the score
+                    if board_class.board[i, n] == "Pawn":
+                        white_material_advantage -= 1
+                    elif board_class.board[i, n] == "Knight":
+                        white_material_advantage -= 3
+                    elif board_class.board[i, n] == "Bishop":
+                        white_material_advantage -= 3
+                    elif board_class.board[i, n] == "Rook":
+                        white_material_advantage -= 5
+                    elif board_class.board[i, n] == "Queen":
+                        white_material_advantage -= 9
+        return white_material_advantage
+
+
+    def get_white_advanced_pawn_value(self, board_class):
+        """Returns a score based off how advanced white's pawns are on the board"""
+        score = 0
+        # cycling through every square
+        for i in range(8):
+            for n in range(8):
+                # checking if the square is a white pawn
+                if board_class.get_square_value(board_class.get_notation_via_index((i, n))) == ("Pawn", "white"):
+                    # adding how far the pawn is down the board (all the "complicated" math is too flip the value since the data is represented from black's point of view)
+                    score += ((((i + 1) - 4) * -1) + 4)
+        return score
+
+
+    def get_black_advanced_pawn_value(self, board_class):
+        """Returns a score based off how advanced pawns are on the board"""
+        score = 0
+        # cycling through every square
+        for i in range(8):
+            for n in range(8):
+                # checking if the square is a white pawn
+                if board_class.get_square_value(board_class.get_notation_via_index((i, n))) == ("Pawn", "black"):
+                    # adding how far the pawn is down the board
+                    score += i
+        return score
+
+
+    def evaluate_position(self, board_class, move: str):
+        # defining variables
+        white_eval = 0
+        black_eval = 0
+        # evaluating white's position
+        # changing points based off material advantage
+        # adding an extra amount to create an insentive for trading when up, and not to when down
+        white_eval += self.get_white_material_advantage(board_class) * 1.3
+        # adding eval for advanced pawns
+        white_eval += self.get_white_advanced_pawn_value(board_class)
