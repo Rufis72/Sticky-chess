@@ -939,32 +939,86 @@ class Bot:
         for i in range(8):
             for n in range(8):
                 # checking if the piece is white
-                if board_class.board_color[i, n] == "white":
+                if board_class.board_color[i][n] == "white":
                     # adding the material value to the score
-                    if board_class.board[i, n] == "Pawn":
+                    if board_class.board[i][n] == "Pawn":
                         white_material_advantage += 1
-                    elif board_class.board[i, n] == "Knight":
+                    elif board_class.board[i][n] == "Knight":
                         white_material_advantage += 3
-                    elif board_class.board[i, n] == "Bishop":
+                    elif board_class.board[i][n] == "Bishop":
                         white_material_advantage += 3
-                    elif board_class.board[i, n] == "Rook":
+                    elif board_class.board[i][n] == "Rook":
                         white_material_advantage += 5
-                    elif board_class.board[i, n] == "Queen":
+                    elif board_class.board[i][n] == "Queen":
                         white_material_advantage += 9
                 # removing blacks material points from the score
-                elif board_class.board_color[i, n] != None:
+                elif board_class.board_color[i][n] != None:
                     # subtracting the material value from the score
-                    if board_class.board[i, n] == "Pawn":
+                    if board_class.board[i][n] == "Pawn":
                         white_material_advantage -= 1
-                    elif board_class.board[i, n] == "Knight":
+                    elif board_class.board[i][n] == "Knight":
                         white_material_advantage -= 3
-                    elif board_class.board[i, n] == "Bishop":
+                    elif board_class.board[i][n] == "Bishop":
                         white_material_advantage -= 3
-                    elif board_class.board[i, n] == "Rook":
+                    elif board_class.board[i][n] == "Rook":
                         white_material_advantage -= 5
-                    elif board_class.board[i, n] == "Queen":
+                    elif board_class.board[i][n] == "Queen":
                         white_material_advantage -= 9
         return white_material_advantage
+
+
+    def get_king_safety(self, board_class, color):
+        """Returns a score based off the immediate safety of the white king"""
+        # defining variables
+        # defining variables - getting enemy color
+        if color == "white":
+            enemy = "black"
+        else:
+            enemy = "white"
+        # defining variables - getting castling values
+        if color == "white":
+            oo = board_class.white_oo
+            ooo = board_class.white_ooo
+        else:
+            oo = board_class.black_oo
+            ooo = board_class.black_ooo
+        location = board_class.find_piece(color=color, piece="King")
+        king_index = board_class.get_index_via_notation(location[0])
+        neighbor_squares = board_class.get_seeing_as_king(location[0])
+        safety_score = float(0)
+        # checking for friendly pieces above the king
+        for i in range(len(neighbor_squares)):
+            # checking if the piece is a pawn
+            if board_class.get_square_value(neighbor_squares[i]) == ("Pawn", color):
+                safety_score += 1
+            # removing points for non-pawn pieces
+            elif board_class.get_square_value(neighbor_squares[i])[1] == color:
+                safety_score -= 0.1
+        # checking for free (no enemy pieces seeing) squares around the king
+        for i in range(len(neighbor_squares)):
+            # getting all squares seeing the square
+            squares = board_class.get_pieces_seeing(neighbor_squares, enemy)
+            # removing score based off the amount of pieces seeing
+            if len(squares) != 0:
+                safety_score -= len(squares)
+        # checking for castling options
+        # checking if just one of the castling options has been removed
+        if oo != ooo:
+            safety_score -= 0.7
+        # checking if both castling options do not exist
+        elif not (oo and ooo):
+            safety_score -= 2.3
+        # checking for the position of the king
+        # removing score based off how close the king is to the center
+        Eking_indexz = king_index[0]
+        Eking_indexo = king_index[1]
+        if king_index[0] > 3:
+            Eking_indexz -= 1
+        if king_index[1] > 3:
+            Eking_indexo -= 1
+        safety_score -= (abs((Eking_indexz + 1) - 4)) * 0.4
+        safety_score -= (abs((Eking_indexo + 1) - 4)) * 0.4
+        return safety_score
 
 
     def get_white_advanced_pawn_value(self, board_class):
@@ -976,8 +1030,8 @@ class Bot:
                 # checking if the square is a white pawn
                 if board_class.get_square_value(board_class.get_notation_via_index((i, n))) == ("Pawn", "white"):
                     # adding how far the pawn is down the board (all the "complicated" math is too flip the value since the data is represented from black's point of view)
-                    score += ((((i + 1) - 4) * -1) + 4)
-        return score
+                    score += i
+        return score - 8
 
 
     def get_black_advanced_pawn_value(self, board_class):
@@ -989,17 +1043,28 @@ class Bot:
                 # checking if the square is a white pawn
                 if board_class.get_square_value(board_class.get_notation_via_index((i, n))) == ("Pawn", "black"):
                     # adding how far the pawn is down the board
-                    score += i
-        return score
+                    score += ((i + 1) * -1) + 8
+        return score - 8
 
 
-    def evaluate_position(self, board_class, move: str):
+    def evaluate_position(self, board_class):
         # defining variables
         white_eval = 0
         black_eval = 0
         # evaluating white's position
         # changing points based off material advantage
         # adding an extra amount to create an insentive for trading when up, and not to when down
-        white_eval += self.get_white_material_advantage(board_class) * 1.3
+        white_eval += (self.get_white_material_advantage(board_class) * 1.3)
         # adding eval for advanced pawns
         white_eval += self.get_white_advanced_pawn_value(board_class)
+        # adding eval for king safety
+        white_eval += self.get_king_safety(board_class, "white")
+        # evaluating black's position
+        # changing points based off material advantage
+        # adding an extra amount to create an insentive for trading when up, and not to when down
+        black_eval -= (self.get_white_material_advantage(board_class) * 1.3)
+        # adding eval for advanced pawns
+        black_eval += self.get_black_advanced_pawn_value(board_class)
+        # adding eval for king safety
+        black_eval += self.get_king_safety(board_class, "black")
+        return (white_eval - black_eval)

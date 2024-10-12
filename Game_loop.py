@@ -1,8 +1,9 @@
-from Basic_functionallity import Display, Board
+from Basic_functionallity import Display, Board, Bot
 import pygame, sys
 # creating class instances
 board = Board()
 display = Display(allow_moves_as_opposite_colored_player=True, screen_size=(800, 800))
+bot = Bot(3)
 # defining variables
 clock = pygame.time.Clock()
 flip_each_time = False
