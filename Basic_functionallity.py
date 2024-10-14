@@ -1065,6 +1065,136 @@ class Bot:
         return score - 8
 
 
+    def get_black_central_space_value(self, board_class):
+        """Returns a score based off how many of blacks pieces are near the center / on "optimal" squares"""
+        # defining variables
+        score = float(0)
+        # checking the important squares for pawns
+        if board_class.board_color[4][2] == "black" and board_class.board[4][2] == "Pawn": # checking c5
+            score += 2
+        if board_class.board_color[4][3] == "black" and board_class.board[4][3] == "Pawn": # checking d5
+            score += 1.5
+        if board_class.board_color[4][4] == "black" and board_class.board[4][4] == "Pawn": # checking e5
+            score += 2
+        # checking the central squares generally
+        if board_class.board_color[4][4] == "black" and board_class.board[4][2] != "Pawn": # checking e5
+            score += 1
+        if board_class.board_color[4][3] == "black" and board_class.board[4][2] != "Pawn": # checking d5
+            score += 1
+        if board_class.board_color[3][4] == "black": # checking e4
+            score += 0.8
+        if board_class.board_color[3][3] == "black": # checking d4
+            score += 0.8
+        # checking the semi-central squares generally
+        if board_class.board_color[2][2] == "black": # checking c3
+            score += 1
+        if board_class.board_color[2][3] == "black": # checking d3
+            score += 1
+        if board_class.board_color[2][4] == "black": # checking e3
+            score += 0.8
+        if board_class.board_color[2][5] == "black": # checking f3
+            score += 0.8
+        if board_class.board_color[3][2] == "black" and board_class.board[4][2] != "Pawn": # checking c4
+            score += 1
+        if board_class.board_color[3][5] == "black": # checking f4
+            score += 1
+        if board_class.board_color[4][2] == "black": # checking c5
+            score += 0.8
+        if board_class.board_color[4][5] == "black": # checking f5
+            score += 0.8
+        if board_class.board_color[5][2] == "black": # checking c6
+            score += 1
+        if board_class.board_color[5][3] == "black": # checking d6
+            score += 1
+        if board_class.board_color[5][4] == "black": # checking e6
+            score += 0.8
+        if board_class.board_color[5][5] == "black": # checking f6
+            score += 0.8
+
+
+    def get_white_central_space_value(self, board_class):
+        """Returns a score based off how many of blacks pieces are near the center / on "optimal" squares"""
+        # defining variables
+        score = float(0)
+        # checking the important squares for pawns
+        if board_class.board_color[3][2] == "white" and board_class.board[4][2] == "Pawn": # checking c4
+            score += 2
+        if board_class.board_color[3][3] == "white" and board_class.board[4][3] == "Pawn": # checking d4
+            score += 1.5
+        if board_class.board_color[3][4] == "white" and board_class.board[4][4] == "Pawn": # checking e4
+            score += 2
+        # checking the central squares generally
+        if board_class.board_color[4][4] == "white": # checking e5
+            score += 0.8
+        if board_class.board_color[4][3] == "white": # checking d5
+            score += 0.8
+        if board_class.board_color[3][4] == "white" and board_class.board[4][2] != "Pawn": # checking e4
+            score += 1
+        if board_class.board_color[3][3] == "white" and board_class.board[4][2] != "Pawn": # checking d4
+            score += 1
+        # checking the semi-central squares generally
+        if board_class.board_color[2][2] == "white": # checking c3
+            score += 1
+        if board_class.board_color[2][3] == "white": # checking d3
+            score += 1
+        if board_class.board_color[2][4] == "white": # checking e3
+            score += 0.8
+        if board_class.board_color[2][5] == "white": # checking f3
+            score += 0.8
+        if board_class.board_color[3][2] == "white" and board_class.board[4][2] != "Pawn": # checking c4
+            score += 1
+        if board_class.board_color[3][5] == "white": # checking f4
+            score += 1
+        if board_class.board_color[4][2] == "white": # checking c5
+            score += 0.8
+        if board_class.board_color[4][5] == "white": # checking f5
+            score += 0.8
+        if board_class.board_color[5][2] == "white": # checking c6
+            score += 1
+        if board_class.board_color[5][3] == "white": # checking d6
+            score += 1
+        if board_class.board_color[5][4] == "white": # checking e6
+            score += 0.8
+        if board_class.board_color[5][5] == "white": # checking f6
+            score += 0.8
+
+
+    def get_black_undeveloped_piece_score(self, board_class):
+        """Returns a score based off how many pieces are on Black's back rank (ignoring the king)"""
+        # defining variables
+        score = float(0)
+        # doing the actual checks
+        for x in range(8):
+            piece = board_class.board[7][x]
+            if board_class.board_color[7][x] == "black" and piece != "King":
+                if piece == "Knight" or piece == "Bishop":
+                    score -= 2
+                if piece == "Queen":
+                    score -= 1.5
+                if piece == "Rook":
+                    score -= 0.3
+        return score
+
+
+    def get_white_undeveloped_piece_score(self, board_class):
+        """Returns a score based off how many pieces are on White's back rank (ignoring the king)"""
+        # defining variables
+        score = float(0)
+        # doing the actual checks
+        for x in range(8):
+            piece = board_class.board[0][x]
+            if board_class.board_color[0][x] == "white" and piece != "King":
+                if piece == "Knight" or piece == "Bishop":
+                    score -= 2
+                if piece == "Queen":
+                    score -= 1.5
+                if piece == "Rook":
+                    score -= 0.3
+        return score
+
+
+
+
     def evaluate_position(self, board_class, player):
         # defining variables
         white_eval = 0
@@ -1077,6 +1207,11 @@ class Bot:
         white_eval += self.get_white_advanced_pawn_value(board_class)
         # adding eval for king safety
         white_eval += self.get_king_safety(board_class, "white")
+        # removing eval for undeveloped pieces
+        white_eval += self.get_white_undeveloped_piece_score(board_class)
+        # adding eval for central pieces
+        white_eval += self.get_white_central_space_value(board_class)
+
         # evaluating black's position
         # changing points based off material advantage
         # adding an extra amount to create an insentive for trading when up, and not to when down
@@ -1085,6 +1220,12 @@ class Bot:
         black_eval += self.get_black_advanced_pawn_value(board_class)
         # adding eval for king safety
         black_eval += self.get_king_safety(board_class, "black")
+        # removing eval for undeveloped pieces
+        black_eval += self.get_black_undeveloped_piece_score(board_class)
+        # adding eval for central pieces
+        black_eval += self.get_black_central_space_value(board_class)
+
+        # returning the score
         if player == "white":
             return (white_eval - black_eval) # positive = you're winning, negative = opposing player is winning
         elif player == "black":
