@@ -48,8 +48,9 @@ class Board:
     def game_ended(self, side_won: str):
         """A method to run any neccesary code at the end of the game"""
         # Current code is temporary
-        print(f"Game over, {side_won} won!")
-        sys.exit()
+        if not self.is_copy:
+            print(f"Game over, {side_won} won!")
+            sys.exit()
 
 
     def create_instance_copy(self):
@@ -463,11 +464,10 @@ class Board:
         """Checks the value of square (gotten from notation), then gets what that piece sees (via checking the value of the square, then running that piece's respective function to get what it sees)."""
         index = self.get_index_via_notation(notation)
         piece = self.get_square_value(notation)[0]
-        piece_color = self.board_color[index[0]][index[1]]
         moves = []
         if piece == "Knight":
             moves = self.get_seeing_as_knight_at(notation)
-        if piece == "King":
+        elif piece == "King":
             moves = self.get_seeing_as_king_at(notation)
         elif piece == "Rook":
             moves = self.get_seeing_as_rook_at(notation)
@@ -521,29 +521,24 @@ class Board:
 
     def get_legal_moves(self, notation: str):
         """Returns all legal moves of a piece on a specific square (gotten via notation) (The moves are obtained by either getting what squares a piece sees, then vetting all the moves to remove the squares it cannot move to. Or uses the respective function to calculate that piece's legal moves)."""
-        if notation[0] == "o": # Checks if the move is castling. (otherwise you get an error)
-            piece = "King"
-        else:
-            piece = self.get_square_value(notation)[0]
+        piece = self.get_square_value(notation)[0]
         if piece == "Pawn":
             moves = self.get_legal_as_pawn_at(notation)
         elif piece == "King":
             moves = self.get_legal_as_king(notation)
         else:
             moves = self.get_piece_seeing(notation)
-        # Changes all squares to indexs
         if type(moves) != types.NoneType:
+            # changing all squares to indexs
             for i in range(len(moves)):
                 if moves[i] != "o-o" and moves[i] != "o-o-o":
                     moves[i] = self.get_index_via_notation(moves[i])
-            # Checking if any squares are "illegal"
-            i2 = 0
-            for i in range(len(moves)):
-                if moves[i2] != "o-o" and moves[i2] != "o-o-o":
-                    if moves[i2][0] < 0 or moves[i2][0] > 7 or moves[i2][1] < 0 or moves[i2][1] > 7 or self.get_square_value(notation)[1] == self.board_color[moves[i2][0]][moves[i2][1]]:
-                        del moves[i2]
-                        i2 -= 1
-                i2 += 1
+            # checking if any squares are "illegal"
+            for i in range(len(moves) - 1, -1, -1):
+                if moves[i] != "o-o" and moves[i] != "o-o-o":
+                    if moves[i][0] < 0 or moves[i][0] > 7 or moves[i][1] < 0 or moves[i][1] > 7 or self.get_square_value(notation)[1] == self.get_square_value(self.get_notation_via_index(moves[i]))[1]:
+                        del moves[i]
+            # changing all squares to notation
             for i in range(len(moves)):
                 if moves[i] != "o-o" and moves[i] != "o-o-o":
                     moves[i] = self.get_notation_via_index(moves[i])
@@ -662,8 +657,31 @@ class Board:
         return returning
 
 
+    def get_all_legal_moves(self, return_non_color_to_play_moves: bool = False):
+        """Gets all legal moves of every piece. Returns in this format: [starting_square + ending_square, starting_square + ending_square, etc]"""
+        # defining variables
+        moves = []
+        who_moving = self.who_to_move()
+        non_start_moves = []
+        # cycling through every square
+        for y in range(8):
+            for x in range(8):
+                # checking if that square should be evaluated
+                if self.board[y][x] != None and (return_non_color_to_play_moves or self.board_color[y][x] == who_moving):
+                    # getting all the legal moves for that square
+                    non_start_moves = self.get_legal_moves(self.get_notation_via_index((y, x)))
+                    for i in range(len(non_start_moves)):
+                        # adding the starting square to all the moves (if the move is not castling
+                        if non_start_moves[i][0] != "o": # checking if the move is castling
+                            non_start_moves[i] = self.get_notation_via_index((y, x)) + non_start_moves[i]
+                    # adding the new moves the list of moves
+                    moves = moves + non_start_moves
+        return moves
+
+
+
 class Display:
-    def __init__(self, square_one_color: typing.Tuple = (125, 148, 93), square_two_color: typing.Tuple = (238, 238, 213), screen_size: typing.Tuple = (700, 700), background: typing.Tuple = (0, 0, 0), if_view_from_whites_perspective: bool = True, grid_lines_size: int = 0, square_selection_color: typing.Tuple = (255, 255, 0), allow_moves_as_opposite_colored_player: bool = False, legal_move_circle_indicator_size: float = 0.7, show_legal_moves_preview: bool = True):
+    def __init__(self, square_one_color: typing.Tuple = (125, 148, 93), square_two_color: typing.Tuple = (238, 238, 213), screen_size: typing.Tuple = (700, 700), background: typing.Tuple = (0, 0, 0), if_view_from_whites_perspective: bool = True, grid_lines_size: int = 0, square_selection_color: typing.Tuple = (255, 255, 0), allow_moves_as_opposite_colored_player: bool = False, legal_move_circle_indicator_size: float = 0.7, show_legal_moves_preview: bool = True, promotion_window_scale: float or int = 1):
         # Defining variables
         self.square_selection_color = square_selection_color
         self.view_from_whites_perspective = if_view_from_whites_perspective
@@ -967,7 +985,7 @@ class Bot:
         return white_material_advantage
 
 
-    def get_king_safety(self, board_class, color):
+    def get_king_safety(self, board_class, color: str):
         """Returns a score based off the immediate safety of the white king"""
         # defining variables
         # defining variables - getting enemy color
@@ -1047,7 +1065,7 @@ class Bot:
         return score - 8
 
 
-    def evaluate_position(self, board_class):
+    def evaluate_position(self, board_class, player):
         # defining variables
         white_eval = 0
         black_eval = 0
@@ -1067,4 +1085,55 @@ class Bot:
         black_eval += self.get_black_advanced_pawn_value(board_class)
         # adding eval for king safety
         black_eval += self.get_king_safety(board_class, "black")
-        return (white_eval - black_eval)
+        if player == "white":
+            return (white_eval - black_eval) # positive = you're winning, negative = opposing player is winning
+        elif player == "black":
+            return (black_eval - white_eval)  # positive = you're winning, negative = opposing player is winning
+        else:
+            raise Exception(f"player must be either 'white' or 'black', not {player}!")
+
+    def minimax(self, depth, board_class_instance, player: str, is_maxing_player: bool = None, alpha: float = float('-inf'), beta: float = float('inf'), moves: list = [], newmove: str = None):
+        """Searches every option of moves and returns the best move"""
+
+        # defining variables
+        if is_maxing_player == None: # getting the is_maxing_player paramater if nothing was entered
+            if player == board_class_instance.who_to_move():
+                is_maxing_player = True
+            else:
+                is_maxing_player = False
+        current_instance = board_class_instance.create_instance_copy()  # creating a copy of the class instance
+        if newmove != None: # checking if there is any new move
+            moves.append(newmove) # adding the new move to the moves list
+            current_instance.legal_move(newmove)  # performing the new move so we have a instance with our updated board
+
+        # checking if you have reached max depth
+        if depth <= 0:
+            print(depth)
+            return((self.evaluate_position(current_instance, player), 0))
+
+        # beginning / continuing the search down the possibility tree
+        # checking if it should try and get the best moves for the current player
+        if is_maxing_player:
+            max_eval = float('-inf')
+            for move in current_instance.get_all_legal_moves():
+                board_eval = self.minimax(depth - 1, current_instance, player, False, alpha, beta, moves, move)[0]
+                max_eval = max(max_eval, board_eval)
+                alpha = max(alpha, board_eval)
+                if beta <= alpha:
+                    break
+            print(depth)
+            return((max_eval, moves))
+
+        # getting the best move for the opponent, to see the position we can force.
+        else:
+            min_eval = float('inf')
+            for move in current_instance.get_all_legal_moves():
+                board_eval = self.minimax(depth - 1, current_instance, player, True, alpha, beta, moves, move)[0]
+                min_eval = min(min_eval, board_eval)
+                beta = min(beta, board_eval)
+                if beta <= alpha:
+                    break
+            print(depth)
+            return((min_eval, moves))
+
+
