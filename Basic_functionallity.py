@@ -946,6 +946,7 @@ class Display:
 class Bot:
     def __init__(self, depth: int):
         self.depth = depth
+        self.searched_positions = {}
 
 
     def get_white_material_advantage(self, board_class):
@@ -1110,6 +1111,7 @@ class Bot:
             score += 0.8
         if board_class.board_color[5][5] == "black": # checking f6
             score += 0.8
+        return score
 
 
     def get_white_central_space_value(self, board_class):
@@ -1122,7 +1124,7 @@ class Bot:
         if board_class.board_color[3][3] == "white" and board_class.board[4][3] == "Pawn": # checking d4
             score += 1.5
         if board_class.board_color[3][4] == "white" and board_class.board[4][4] == "Pawn": # checking e4
-            score += 2
+            score += 1.8
         # checking the central squares generally
         if board_class.board_color[4][4] == "white": # checking e5
             score += 0.8
@@ -1157,6 +1159,7 @@ class Bot:
             score += 0.8
         if board_class.board_color[5][5] == "white": # checking f6
             score += 0.8
+        return score
 
 
     def get_black_undeveloped_piece_score(self, board_class):
@@ -1237,49 +1240,57 @@ class Bot:
         """Searches every option of moves and returns the best move"""
 
         # defining variables
-        if is_maxing_player == None: # getting the is_maxing_player paramater if nothing was entered
-            if player == board_class_instance.who_to_move():
-                is_maxing_player = True
-            else:
-                is_maxing_player = False
         current_instance = board_class_instance.create_instance_copy()  # creating a copy of the class instance
         if newmove != None: # checking if there is any new move
             moves.append(newmove) # adding the new move to the moves list
             current_instance.legal_move(newmove)  # performing the new move so we have a instance with our updated board
-        returning_move = None
-
-        # checking if you have reached max depth
-        if depth <= 0:
-            print(depth)
-            return((self.evaluate_position(current_instance, player), []))
-
-        # beginning / continuing the search down the possibility tree
-        # checking if it should try and get the best moves for the current player
-        if is_maxing_player:
-            max_eval = float('-inf')
-            for move in current_instance.get_all_legal_moves():
-                board_eval = self.minimax(depth - 1, current_instance, player, False, alpha, beta, moves, move)
-                max_eval = max(max_eval, board_eval[0])
-                alpha = max(alpha, board_eval[0])
-                if max_eval == board_eval[0]:
-                    returning_move = [move]
-                if beta <= alpha:
-                    break
-            print(depth)
-            return((max_eval, returning_move + board_eval[1]))
-
-        # getting the best move for the opponent, to see the position we can force.
         else:
-            min_eval = float('inf')
-            for move in current_instance.get_all_legal_moves():
-                board_eval = self.minimax(depth - 1, current_instance, player, True, alpha, beta, moves, move)
-                min_eval = min(min_eval, board_eval[0])
-                beta = min(beta, board_eval[0])
-                if min_eval == board_eval[0]:
-                    returning_move = [move]
-                if beta <= alpha:
-                    break
-            print(depth)
-            return((min_eval, returning_move + board_eval[1]))
+            self.searched_positions = {}
+        try:
+            if self.searched_positions.get(current_instance.board):
+                pass
+        except:
+            self.searched_positions.update({str(current_instance.board): True})
+            if is_maxing_player == None: # getting the is_maxing_player paramater if nothing was entered
+                if player == board_class_instance.who_to_move():
+                    is_maxing_player = True
+                else:
+                    is_maxing_player = False
+
+            returning_move = None
+
+            # checking if you have reached max depth
+            if depth <= 0:
+                print(depth)
+                return((self.evaluate_position(current_instance, player), []))
+
+            # beginning / continuing the search down the possibility tree
+            # checking if it should try and get the best moves for the current player
+            if is_maxing_player:
+                max_eval = float('-inf')
+                for move in current_instance.get_all_legal_moves():
+                    board_eval = self.minimax(depth - 1, current_instance, player, False, alpha, beta, moves, move)
+                    max_eval = max(max_eval, board_eval[0])
+                    alpha = max(alpha, board_eval[0])
+                    if max_eval == board_eval[0]:
+                        returning_move = [move]
+                    if beta <= alpha:
+                        break
+                print(depth)
+                return((max_eval, returning_move + board_eval[1]))
+
+            # getting the best move for the opponent, to see the position we can force.
+            else:
+                min_eval = float('inf')
+                for move in current_instance.get_all_legal_moves():
+                    board_eval = self.minimax(depth - 1, current_instance, player, True, alpha, beta, moves, move)
+                    min_eval = min(min_eval, board_eval[0])
+                    beta = min(beta, board_eval[0])
+                    if min_eval == board_eval[0]:
+                        returning_move = [move]
+                    if beta <= alpha:
+                        break
+                print(depth)
+                return((min_eval, returning_move + board_eval[1]))
 
 
