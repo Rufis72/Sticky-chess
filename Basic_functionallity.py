@@ -1105,35 +1105,40 @@ class Bot:
         if newmove != None: # checking if there is any new move
             moves.append(newmove) # adding the new move to the moves list
             current_instance.legal_move(newmove)  # performing the new move so we have a instance with our updated board
+        returning_move = None
 
         # checking if you have reached max depth
         if depth <= 0:
             print(depth)
-            return((self.evaluate_position(current_instance, player), 0))
+            return((self.evaluate_position(current_instance, player), []))
 
         # beginning / continuing the search down the possibility tree
         # checking if it should try and get the best moves for the current player
         if is_maxing_player:
             max_eval = float('-inf')
             for move in current_instance.get_all_legal_moves():
-                board_eval = self.minimax(depth - 1, current_instance, player, False, alpha, beta, moves, move)[0]
-                max_eval = max(max_eval, board_eval)
-                alpha = max(alpha, board_eval)
+                board_eval = self.minimax(depth - 1, current_instance, player, False, alpha, beta, moves, move)
+                max_eval = max(max_eval, board_eval[0])
+                alpha = max(alpha, board_eval[0])
+                if max_eval == board_eval[0]:
+                    returning_move = [move]
                 if beta <= alpha:
                     break
             print(depth)
-            return((max_eval, moves))
+            return((max_eval, returning_move + board_eval[1]))
 
         # getting the best move for the opponent, to see the position we can force.
         else:
             min_eval = float('inf')
             for move in current_instance.get_all_legal_moves():
-                board_eval = self.minimax(depth - 1, current_instance, player, True, alpha, beta, moves, move)[0]
-                min_eval = min(min_eval, board_eval)
-                beta = min(beta, board_eval)
+                board_eval = self.minimax(depth - 1, current_instance, player, True, alpha, beta, moves, move)
+                min_eval = min(min_eval, board_eval[0])
+                beta = min(beta, board_eval[0])
+                if min_eval == board_eval[0]:
+                    returning_move = [move]
                 if beta <= alpha:
                     break
             print(depth)
-            return((min_eval, moves))
+            return((min_eval, returning_move + board_eval[1]))
 
 
