@@ -1002,6 +1002,9 @@ class Bot:
             oo = board_class.black_oo
             ooo = board_class.black_ooo
         location = board_class.find_piece(color=color, piece="King")
+        # checking if there is no king (then returning a negative infinite score)
+        if location == []:
+            return float("-inf")
         king_index = board_class.get_index_via_notation(location[0])
         neighbor_squares = board_class.get_seeing_as_king(location[0])
         safety_score = float(0)
@@ -1261,7 +1264,6 @@ class Bot:
 
             # checking if you have reached max depth
             if depth <= 0:
-                print(depth)
                 return((self.evaluate_position(current_instance, player), []))
 
             # beginning / continuing the search down the possibility tree
