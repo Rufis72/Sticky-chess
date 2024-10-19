@@ -541,7 +541,7 @@ class Board:
                     moves[i] = self.get_index_via_notation(moves[i])
             # checking if any squares are "illegal"
             for i in range(len(moves) - 1, -1, -1):
-                # checking if that move is eithe castling or pwn promotion (then they were not converted to indexs)
+                # checking if that move is either castling or pwn promotion (then they were not converted to indexs)
                 if moves[i] != "o-o" and moves[i] != "o-o-o" and type(moves[i]) != str:
                     if moves[i][0] < 0 or moves[i][0] > 7 or moves[i][1] < 0 or moves[i][1] > 7 or self.get_square_value(notation)[1] == self.get_square_value(self.get_notation_via_index(moves[i]))[1]:
                         del moves[i]
@@ -866,19 +866,23 @@ class Display:
         # getting all legal moves as notation
         notation_moves = board_class.get_legal_moves(self.board_notation[square_number])
         # changing all notation to square numbers
-        for i in range(len(notation_moves)):
-            if notation_moves[i] != "o-o" and notation_moves[i] != "o-o-o":
+        for i in range(len(notation_moves) - 1, -1, -1):
+            if notation_moves[i] != "o-o" and notation_moves[i] != "o-o-o" and len(notation_moves[i]) != 4:
                 notation_moves[i] = self.board_notation.index(notation_moves[i])
+            elif len(notation_moves[i]) == 4 and notation_moves[i][3] == "Q":
+                notation_moves[i] = self.board_notation.index(notation_moves[i][0:2])
             elif notation_moves[i] == "o-o":
                 if board_class.who_to_move() == "white":
                     notation_moves[i] = self.board_notation.index("g1")
                 else:
                     notation_moves[i] = self.board_notation.index("g8")
-            else:
+            elif notation_moves[i] == "o-o-o":
                 if board_class.who_to_move() == "white":
                     notation_moves[i] = self.board_notation.index("c1")
                 else:
                     notation_moves[i] = self.board_notation.index("c8")
+            else:
+                del notation_moves[i]
         return notation_moves
 
 
@@ -907,26 +911,9 @@ class Display:
             # drawing an outline (if the square is selected)
             if i == self.square_selected_one:
                 pygame.draw.rect(self.screen, self.square_selection_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size), int(self.square_edge_size / 10))
-            # showing any previews of legal moves (if paramater to do so is true)
+            # showing any previews of legal moves (if parameter to do so is true)
             if show_legal_moves_preview and self.square_selected_one != None:
                 moves = self.get_legal_moves_preview(board_class, self.square_selected_one)
-                # changing castling to show highlighted squares instead
-                if board_class.who_to_move() == "white":
-                    try:
-                        moves[moves.index("o-o")] == "g1"
-                    except:
-                        try:
-                            moves[moves.index("o-o-o")] == "c1"
-                        except:
-                            pass
-                else:
-                    try:
-                        moves[moves.index("o-o")] == "g8"
-                    except:
-                        try:
-                            moves[moves.index("o-o-o")] == "c8"
-                        except:
-                            pass
                 # checking if the correct piece is moving, and is allowed to be moved by this player
                 if (self.allowed_moves_as_opposing_color or ((board_class.who_to_move() == "white" and self.view_from_whites_perspective) or (board_class.who_to_move() == "black" and not self.view_from_whites_perspective))) and board_class.who_to_move() == board_class.get_square_value(self.board_notation[self.square_selected_one])[1]:
                     try:
