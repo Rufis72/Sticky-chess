@@ -523,7 +523,7 @@ class Board:
 
 
 
-    def get_legal_moves(self, notation: str):
+    def get_legal_moves(self, notation: str) -> list:
         """Returns all legal moves of a piece on a specific square (gotten via notation) (The moves are obtained by either getting what squares a piece sees, then vetting all the moves to remove the squares it cannot move to. Or uses the respective function to calculate that piece's legal moves)."""
         piece = self.get_square_value(notation)[0]
         if piece == "Pawn":
@@ -537,18 +537,18 @@ class Board:
             # changing all squares to indexs
             for i in range(len(moves)):
                 # checking if the move is nether castling nor pawn promotion
-                if moves[i] != "o-o" and moves[i] != "o-o-o" and type(moves[i]) != str:
+                if len(moves[i]) < 3:
                     moves[i] = self.get_index_via_notation(moves[i])
             # checking if any squares are "illegal"
             for i in range(len(moves) - 1, -1, -1):
-                # checking if that move is either castling or pwn promotion (then they were not converted to indexs)
-                if moves[i] != "o-o" and moves[i] != "o-o-o" and type(moves[i]) != str:
+                # checking if that move is either castling or pawn promotion (then they were not converted to indexs)
+                if type(moves[i]) != str:
                     if moves[i][0] < 0 or moves[i][0] > 7 or moves[i][1] < 0 or moves[i][1] > 7 or self.get_square_value(notation)[1] == self.get_square_value(self.get_notation_via_index(moves[i]))[1]:
                         del moves[i]
             # changing all squares back to notation (except castling and pawn promotion)
             for i in range(len(moves)):
                 # checking if the move is neither pawn promotion, nor castling
-                if moves[i] != "o-o" and moves[i] != "o-o-o" and type(moves[i]) != str:
+                if type(moves[i]) != str:
                     moves[i] = self.get_notation_via_index(moves[i])
         return moves
 
