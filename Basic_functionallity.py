@@ -1,5 +1,9 @@
 # importing modules
-import pygame, sys, types, math, typing, copy, pyperclip
+from tabnanny import check
+
+import pygame, sys, types, math, typing, copy, pyperclip, time
+
+# todo add pawn promotion window, add eval for doubled pawn, add changability to bot.evaluate_position(), add fen capability to board, train values with stockfish as source of truth, changed eval values to be more like stockfish?, add different eval functions, add eval option to minimax
 
 
 class IllegalMove(Exception):
@@ -12,7 +16,7 @@ class Board:
     Terms:
     Notation: A string used to represent a square in chess
     Index: Typically used to represent the acutal location of a square's information"""
-    def __init__(self, copy_moves_when_game_over: bool = False):
+    def __init__(self, allow_king_blunders: bool = False, copy_moves_when_game_over: bool = False):
         self.board = [["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"],
                  ["Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn"],
                  [None, None, None, None, None, None, None, None],
@@ -44,6 +48,7 @@ class Board:
         self.black_oo = True
         self.black_ooo = True
         self.copy_moves_when_over = copy_moves_when_game_over
+        self.allow_king_blunders = allow_king_blunders
 
 
     def game_ended(self, side_won: str):
@@ -438,10 +443,21 @@ class Board:
         return moves
 
 
-    def get_legal_as_king(self, notation: str):
+    def get_legal_as_king_at(self, notation: str):
         """Returns all possible legal moves as a king from a certain square (the passed in notation)."""
         # Getting all "typical" (moving to all adjacent squares) king moves
         moves = [*self.get_seeing_as_king(notation)]
+        if self.get_square_value(notation)[1] == "white":
+            opposite_color = "black"
+        else:
+            opposite_color = "white"
+        if notation == "b8":
+            print(1)
+        # if king blunders aren't allowed, checks if any move would blunder the king
+        if not self.allow_king_blunders:
+            for i in range(len(moves) - 1, -1, -1):
+                if self.get_pieces_seeing(notation, opposite_color, True) != []:
+                    del moves[i]
         # Castling
         # Checking the color of the king
         if self.get_square_value(notation)[1] == "white":
@@ -505,13 +521,15 @@ class Board:
                 self.board_color[i][n] = None
 
 
-    def get_pieces_seeing(self, notation: str, color: typing.Tuple = None):
+    def get_pieces_seeing(self, notation: str, color: typing.Tuple = None, check_legal_for_pawn: bool = False):
         """Returns the squares off all pieces seeing a certain square (the square in question is gotten from notation), color removes all pieces that are not of one color"""
         pieces_locations = []
         for i in range(8):
             for n in range(8):
                 try:
-                    if self.get_piece_seeing(self.get_notation_via_index((i, n))).index(notation) != None:
+                    if check_legal_for_pawn and self.board[i][n] == "Pawn":
+                        self.get_legal_moves(self.get_notation_via_index((i, n)))
+                    elif self.get_piece_seeing(self.get_notation_via_index((i, n))).index(notation) != None:
                         pieces_locations.append(self.get_notation_via_index((i, n)))
                 except:
                     pass
@@ -529,7 +547,7 @@ class Board:
         if piece == "Pawn":
             moves = self.get_legal_as_pawn_at(notation)
         elif piece == "King":
-            moves = self.get_legal_as_king(notation)
+            moves = self.get_legal_as_king_at(notation)
         else:
             moves = self.get_piece_seeing(notation)
         # checking if "[]" was returned
@@ -561,7 +579,7 @@ class Board:
             return "black"
 
 
-    def legal_move(self, move: str, raise_error_if_illegal: typing.Tuple = True):
+    def legal_move(self, move: str, raise_error_if_illegal: typing.Tuple = True, show_debug_data: bool = False) -> True or False:
         """Checks if the move passed in is legal, if so then the move is performed and the function returns True, if it failed one of the checks, the function will return False."""
         # Basic check for illegal moves
         if raise_error_if_illegal:
@@ -572,9 +590,12 @@ class Board:
                     raise IllegalMove(f"move \"{move}\" contains illegal square(s)")
                 if not int(move[3]) <= 8 or not int(move[3]) >= 1:
                     raise IllegalMove(f"move \"{move}\" contains illegal square(s)")
+                if self.get_square_value(move[0:2]) == (None, None):
+                    raise IllegalMove(f"move \"{move}\" is illegal, the square {move[0:2]} is empty")
                 if self.get_square_value(move[0:2])[1] != self.who_to_move():
-                    raise IllegalMove(
-                        f"move \"{move}\" is illegal, it is not {self.get_square_value(move[0:2])[1]}'s turn to move")
+                    raise IllegalMove(f"move \"{move}\" is illegal, it is not {self.get_square_value(move[0:2])[1]}'s turn to move")
+                if self.get_square_value(move[0:2])[1] == self.get_square_value(move[2:4])[1]:
+                    raise IllegalMove(f"move \"{move}\" is illegal, you cannot capture your own pieces")
             if len(move) > 6:
                 raise IllegalMove(f"move \"{move}\" is too long")
             if len(move) == 6 and self.get_square_value(move[0:2])[0] == "Pawn" and (move[2] == "0" or move[2] == "7"):
@@ -586,7 +607,7 @@ class Board:
             if self.who_to_move() == "white":
                 if self.get_square_value("e1") == ("King", "white"):
                     # Checks if white can legally short castle, then, if so, performs it
-                    if self.errorless_index(self.get_legal_as_king("e1"), "o-o") and move == "o-o":
+                    if self.errorless_index(self.get_legal_as_king_at("e1"), "o-o") and move == "o-o":
                         # "moving" the Rook and King
                         self.clear_square("e1")
                         self.clear_square("h1")
@@ -600,7 +621,7 @@ class Board:
                         self.white_ooo = False
                         return True
                     # Checks if white can legally long castle, then, if so, performs it
-                    if self.errorless_index(self.get_legal_as_king("e1"), "o-o-o") and move == "o-o-o":
+                    if self.errorless_index(self.get_legal_as_king_at("e1"), "o-o-o") and move == "o-o-o":
                         # "moving" the Rook and King
                         self.clear_square("e1")
                         self.clear_square("a1")
@@ -617,7 +638,7 @@ class Board:
                 # Castling for black
                 if self.get_square_value("e8") == ("King", "black"):
                     # Checks if black can legally short castle, then, if so, performs it
-                    if self.errorless_index(self.get_legal_as_king("e8"), "o-o") and move == "o-o":
+                    if self.errorless_index(self.get_legal_as_king_at("e8"), "o-o") and move == "o-o":
                         # "moving" the Rook and King
                         # removing the old King and Rook
                         self.clear_square("e8")
@@ -632,7 +653,7 @@ class Board:
                         self.black_ooo = False
                         return True
                     # Checks if black can legally long castle, then, if so, performs it
-                    if self.errorless_index(self.get_legal_as_king("e8"), "o-o-o") and move == "o-o-o":
+                    if self.errorless_index(self.get_legal_as_king_at("e8"), "o-o-o") and move == "o-o-o":
                         # "moving" the Rook and King
                         self.clear_square("e8")
                         self.clear_square("a8")
@@ -683,6 +704,9 @@ class Board:
             if self.errorless_index(self.get_legal_moves(move[0:2]), move[2:4]) != None and self.get_square_value(move[0:2])[1] == self.who_to_move():
                 self.move(move)
                 return True
+        # printing debug data (if enabled)
+        if show_debug_data:
+            print((self.get_square_value(move[0:2]), self.get_square_value(move[2:4]), move))
         # raising an error, or if disabled, returning False
         if raise_error_if_illegal:
             raise IllegalMove(f"move \"{move}\" is illegal")
@@ -690,16 +714,17 @@ class Board:
             return False
 
 
-    def legal_moves(self, moves: list or typing.Tuple):
+    def legal_moves(self, moves: list or typing.Tuple, wait: float or int = 0) -> list:
         """Performs multiple legal moves passed in as a list or tuple"""
         # defining variables
         returning = []
         for i in range(len(moves)):
             returning.append(self.legal_move(moves[i]))
+            time.sleep(wait)
         return returning
 
 
-    def get_all_legal_moves(self, return_non_color_to_play_moves: bool = False):
+    def get_all_legal_moves(self, return_non_color_to_play_moves: bool = False) -> list:
         """Gets all legal moves of every piece. Returns in this format: [starting_square + ending_square, starting_square + ending_square, etc]"""
         # defining variables
         moves = []
@@ -861,7 +886,7 @@ class Display:
                 self.square_selected_one = None
 
 
-    def get_legal_moves_preview(self, board_class, square_number: int):
+    def get_legal_moves_preview(self, board_class, square_number: int) -> list:
         """Returns all legal moves of a square based of square number"""
         # getting all legal moves as notation
         notation_moves = board_class.get_legal_moves(self.board_notation[square_number])
@@ -953,7 +978,7 @@ class Display:
         pygame.display.flip()
 
 
-    def get_square_pressed(self):
+    def get_square_pressed(self) -> int or None:
         """Returns an index of which square is being pressed, if none are, None is returned"""
         # iterating through all squares and checking if it is pressed
         for i in range(64):
@@ -978,7 +1003,7 @@ class Bot:
         self.searched_positions = {}
 
 
-    def get_white_material_advantage(self, board_class):
+    def get_white_material_advantage(self, board_class) -> int:
         """Returns the material advantage of white"""
         # defining variables
         white_material_advantage = 0
@@ -1015,7 +1040,7 @@ class Bot:
         return white_material_advantage
 
 
-    def get_king_safety(self, board_class, color: str):
+    def get_king_safety(self, board_class, color: str) -> float:
         """Returns a score based off the immediate safety of the white king"""
         # defining variables
         # defining variables - getting enemy color
@@ -1072,7 +1097,7 @@ class Bot:
         return safety_score
 
 
-    def get_white_advanced_pawn_value(self, board_class):
+    def get_white_advanced_pawn_value(self, board_class) -> int:
         """Returns a score based off how advanced white's pawns are on the board"""
         score = 0
         # cycling through every square
@@ -1085,7 +1110,7 @@ class Bot:
         return score - 8
 
 
-    def get_black_advanced_pawn_value(self, board_class):
+    def get_black_advanced_pawn_value(self, board_class) -> int:
         """Returns a score based off how advanced pawns are on the board"""
         score = 0
         # cycling through every square
@@ -1098,7 +1123,7 @@ class Bot:
         return score - 8
 
 
-    def get_black_central_space_value(self, board_class, pawn_center_value: int or float = 2, general_central_value: int or float = 0.3):
+    def get_black_central_space_value(self, board_class, pawn_center_value: int or float = 2, general_central_value: int or float = 0.3) -> float:
         """Returns a score based off how many of blacks pieces are near the center / on "optimal" squares"""
         # defining variables
         score = float(0)
@@ -1146,7 +1171,7 @@ class Bot:
         return score
 
 
-    def get_white_central_space_value(self, board_class, pawn_center_values: float or int = 2, general_central_value: int or float = 0.3):
+    def get_white_central_space_value(self, board_class, pawn_center_values: float or int = 2, general_central_value: int or float = 0.3) -> float:
         """Returns a score based off how many of blacks pieces are near the center / on "optimal" squares"""
         # defining variables
         score = float(0)
@@ -1194,7 +1219,7 @@ class Bot:
         return score
 
 
-    def get_black_undeveloped_piece_score(self, board_class):
+    def get_black_undeveloped_piece_score(self, board_class) -> float:
         """Returns a score based off how many pieces are on Black's back rank (ignoring the king)"""
         # defining variables
         score = float(0)
@@ -1211,7 +1236,7 @@ class Bot:
         return score
 
 
-    def get_white_undeveloped_piece_score(self, board_class):
+    def get_white_undeveloped_piece_score(self, board_class) -> float:
         """Returns a score based off how many pieces are on White's back rank (ignoring the king)"""
         # defining variables
         score = float(0)
@@ -1230,7 +1255,7 @@ class Bot:
 
 
 
-    def evaluate_position(self, board_class, player):
+    def evaluate_position(self, board_class, player) -> float:
         # defining variables
         white_eval = 0
         black_eval = 0
@@ -1268,11 +1293,15 @@ class Bot:
         else:
             raise Exception(f"player must be either 'white' or 'black', not {player}!")
 
-    def minimax(self, depth: int, board_class_instance: object, player: str, is_maxing_player: bool = None,
+    def minimax(self,
+                depth: int,
+                board_class_instance: object,
+                player: str,
+                is_maxing_player: bool = None,
                 alpha: float = float('-inf'),
                 beta: float = float('inf'),
                 moves: list = [],
-                newmove: str = None):
+                newmove: str = None) -> tuple:
         """Searches every option of moves and returns the best move"""
 
         # defining variables
@@ -1307,8 +1336,12 @@ class Bot:
                     alpha = max(alpha, board_eval[0])
                     if max_eval == board_eval[0]:
                         returning_move = [move]
-                    if beta <= alpha:
-                        break
+                    try:
+                        if beta <= alpha:
+                            break
+                    except:
+                        pyperclip.copy(board_class_instance.player_moves)
+                        raise Exception("error ran into, moves copied to clipboard")
                 self.searched_positions.update({str(current_instance.board): (max_eval, returning_move + board_eval[1])})
                 return((max_eval, returning_move + board_eval[1]))
 
