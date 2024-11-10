@@ -458,12 +458,9 @@ class Board:
                     if self.get_square_value(moves[i])[0] == "King":
                         continue
                     temp_position = self.create_instance_copy()
-                    try:
-                        temp_position.move(notation + moves[i])
-                        if temp_position.get_pieces_seeing(moves[i], opposite_color, True) != []:
-                            del moves[i]
-                    except:
-                        pass
+                    temp_position.move(notation + moves[i])
+                    if temp_position.get_pieces_seeing(moves[i], opposite_color, True) != []:
+                        del moves[i]
         # Castling
         # Checking the color of the king
         if self.get_square_value(notation)[1] == "white":
