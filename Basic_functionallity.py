@@ -458,8 +458,7 @@ class Board:
                     temp_position = self.create_instance_copy()
                     try:
                         temp_position.move(notation + moves[i])
-                        print(temp_position.get_pieces_seeing(moves[i]))
-                        if temp_position.get_pieces_seeing(moves[i]) != []:
+                        if temp_position.get_pieces_seeing(moves[i], opposite_color, True) != []:
                             del moves[i]
                     except:
                         pass
