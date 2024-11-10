@@ -463,18 +463,19 @@ class Board:
                         del moves[i]
         # Castling
         # Checking the color of the king
-        if self.get_square_value(notation)[1] == "white":
-            # Castling for white
-            if self.white_oo and self.get_pieces_seeing("f1", "black") == [] and self.get_pieces_seeing("g1", "black") == [] and self.get_square_value("f1") == (None, None) and self.get_square_value("g1") == (None, None) and self.white_oo:
-                moves.append("o-o")
-            if self.white_oo and self.get_pieces_seeing("b1", "black") == [] and self.get_pieces_seeing("c1", "black") == [] and self.get_pieces_seeing("d1", "black") == [] and self.get_square_value("b1") == (None, None) and self.get_square_value("c1") == (None, None) and self.get_square_value("d1") == (None, None) and self.white_ooo:
-                moves.append("o-o-o")
-        else:
-            # Castling for black
-            if self.black_oo and self.get_pieces_seeing("f8", "white") == [] and self.get_pieces_seeing("g8", "white") == [] and self.get_square_value("f8") == (None, None) and self.get_square_value("g8") == (None, None):
-                moves.append("o-o")
-            if self.black_oo and self.get_pieces_seeing("b8", "white") == [] and self.get_pieces_seeing("c8", "white") == [] and self.get_pieces_seeing("d8", "white") == [] and self.get_square_value("b8") == (None, None) and self.get_square_value("c8") == (None, None) and self.get_square_value("d8") == (None, None):
-                moves.append("o-o-o")
+        if self.get_pieces_seeing(notation, opposite_color, True) == []:
+            if self.get_square_value(notation)[1] == "white":
+                # Castling for white
+                if self.white_oo and self.get_pieces_seeing("f1", "black") == [] and self.get_pieces_seeing("g1", "black") == [] and self.get_square_value("f1") == (None, None) and self.get_square_value("g1") == (None, None) and self.white_oo:
+                    moves.append("o-o")
+                if self.white_ooo and self.get_pieces_seeing("b1", "black") == [] and self.get_pieces_seeing("c1", "black") == [] and self.get_pieces_seeing("d1", "black") == [] and self.get_square_value("b1") == (None, None) and self.get_square_value("c1") == (None, None) and self.get_square_value("d1") == (None, None) and self.white_ooo:
+                    moves.append("o-o-o")
+            else:
+                # Castling for black
+                if self.black_oo and self.get_pieces_seeing("f8", "white") == [] and self.get_pieces_seeing("g8", "white") == [] and self.get_square_value("f8") == (None, None) and self.get_square_value("g8") == (None, None):
+                    moves.append("o-o")
+                if self.black_ooo and self.get_pieces_seeing("b8", "white") == [] and self.get_pieces_seeing("c8", "white") == [] and self.get_pieces_seeing("d8", "white") == [] and self.get_square_value("b8") == (None, None) and self.get_square_value("c8") == (None, None) and self.get_square_value("d8") == (None, None):
+                    moves.append("o-o-o")
         # Checking if any squares have friendly pieces on them
         for i in range(len(moves) - 1, -1, -1):
             if moves[i] != "o-o" and moves[i] != "o-o-o":
@@ -709,6 +710,7 @@ class Board:
             print((self.get_square_value(move[0:2]), self.get_square_value(move[2:4]), move))
         # raising an error, or if disabled, returning False
         if raise_error_if_illegal:
+            print(self.player_moves)
             raise IllegalMove(f"move \"{move}\" is illegal")
         else:
             return False
