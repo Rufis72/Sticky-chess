@@ -451,13 +451,18 @@ class Board:
             opposite_color = "black"
         else:
             opposite_color = "white"
-        if notation == "b8":
-            print(1)
         # if king blunders aren't allowed, checks if any move would blunder the king
         if not self.allow_king_blunders:
             for i in range(len(moves) - 1, -1, -1):
-                if self.get_pieces_seeing(notation, opposite_color, True) != []:
-                    del moves[i]
+                if moves[i][0] != "o":
+                    temp_position = self.create_instance_copy()
+                    try:
+                        temp_position.move(notation + moves[i])
+                        print(temp_position.get_pieces_seeing(moves[i]))
+                        if temp_position.get_pieces_seeing(moves[i]) != []:
+                            del moves[i]
+                    except:
+                        pass
         # Castling
         # Checking the color of the king
         if self.get_square_value(notation)[1] == "white":
@@ -521,22 +526,19 @@ class Board:
                 self.board_color[i][n] = None
 
 
-    def get_pieces_seeing(self, notation: str, color: typing.Tuple = None, check_legal_for_pawn: bool = False):
+    def get_pieces_seeing(self, notation: str, color: str = None, check_legal_for_pawn: bool = False):
         """Returns the squares off all pieces seeing a certain square (the square in question is gotten from notation), color removes all pieces that are not of one color"""
         pieces_locations = []
         for i in range(8):
             for n in range(8):
                 try:
-                    if check_legal_for_pawn and self.board[i][n] == "Pawn":
-                        self.get_legal_moves(self.get_notation_via_index((i, n)))
-                    elif self.get_piece_seeing(self.get_notation_via_index((i, n))).index(notation) != None:
-                        pieces_locations.append(self.get_notation_via_index((i, n)))
+                    if color != None and self.board_color[i][n] == color:
+                        if check_legal_for_pawn and self.board[i][n] == "Pawn":
+                            self.get_legal_moves(self.get_notation_via_index((i, n)))
+                        elif self.get_piece_seeing(self.get_notation_via_index((i, n))).index(notation) != None:
+                            pieces_locations.append(self.get_notation_via_index((i, n)))
                 except:
                     pass
-        if color != None:
-            for i in range(len(pieces_locations) - 1, -1, -1):
-                if self.get_square_value(pieces_locations[i])[1] != color:
-                    del pieces_locations[i]
         return pieces_locations
 
 
@@ -748,8 +750,9 @@ class Board:
 
 
 class Display:
-    def __init__(self, square_one_color: typing.Tuple = (125, 148, 93), square_two_color: typing.Tuple = (238, 238, 213), screen_size: typing.Tuple = (700, 700), background: typing.Tuple = (0, 0, 0), if_view_from_whites_perspective: bool = True, grid_lines_size: int = 0, square_selection_color: typing.Tuple = (255, 255, 0), allow_moves_as_opposite_colored_player: bool = False, legal_move_circle_indicator_size: float = 0.7, show_legal_moves_preview: bool = True, promotion_window_scale: float or int = 1):
+    def __init__(self, square_one_color: typing.Tuple = (125, 148, 93), square_two_color: typing.Tuple = (238, 238, 213), screen_size: typing.Tuple = (700, 700), background: typing.Tuple = (0, 0, 0), if_view_from_whites_perspective: bool = True, grid_lines_size: int = 0, square_selection_color: typing.Tuple = (255, 255, 0), allow_moves_as_opposite_colored_player: bool = False, legal_move_circle_indicator_size: float = 0.7, show_legal_moves_preview: bool = True, promotion_window_scale: float or int = 1, resizeable: bool = True):
         # Defining variables
+        self.resizeable_display = resizeable
         self.square_selection_color = square_selection_color
         self.view_from_whites_perspective = if_view_from_whites_perspective
         self.square_one_color = square_one_color
@@ -761,6 +764,7 @@ class Display:
         self.allowed_moves_as_opposing_color = allow_moves_as_opposite_colored_player
         self.square_selected_one = None
         self.show_legal_moves_preview = show_legal_moves_preview
+        self.grid_lines_size = grid_lines_size
         self.board_notation_white = ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
                           "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
                           "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
@@ -779,36 +783,47 @@ class Display:
                           "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"]
         self.move_preview_circle_percentage = legal_move_circle_indicator_size
         self.board_notation = []
+        # Setting the correct orientation of the board
         if if_view_from_whites_perspective:
             self.board_notation = self.board_notation_white
         else:
             self.board_notation = self.board_notation_black
         # Defining variables - Math for scaling everything
-        if grid_lines_size == 0:
-            self.square_spacing_size = 0
+        # Scaling for if the screen size is a square
         if self.screen_size[0] == screen_size[1]:
+            # Changing grid line size from 0 to -1 to align with expectations (There are wierd spacing bugs)
             if grid_lines_size == 0:
                 self.square_spacing_size = -1
+            # Calculating the grid line size with scale in mind
             else:
+                # (screen_size[0] / grid_lines_size): dividing the size of the screen by the grid_line_size (grid_line_size is how much percentage of the screen is border total (1 over grid_line_size). / 9: cutting the border into 9, since there will be 9 lines of border total
                 self.square_spacing_size = (screen_size[0] / grid_lines_size) / 9
             self.board_offset_x = self.square_spacing_size
             self.board_offset_y = self.square_spacing_size
             self.square_edge_size = (screen_size[0] - (self.square_spacing_size * 9)) / 8
+        # Scaling for if the screen is a rectangle, with the long side on the bottom
         elif self.screen_size[0] > self.screen_size[1]:
+            # Changing grid line size from 0 to -1 to align with expectations (There are wierd spacing bugs)
             if grid_lines_size == 0:
                 self.square_spacing_size = -1
+            # Calculating the grid line size with scale in mind
             else:
+                # (screen_size[0] / grid_lines_size): dividing the size of the screen by the grid_line_size (grid_line_size is how much percentage of the screen is border total (1 over grid_line_size). / 9: cutting the border into 9, since there will be 9 lines of border total
                 self.square_spacing_size = (screen_size[1] / grid_lines_size) / 9
-            self.board_offset_x = self.square_spacing_size - (self.screen_size[1] - self.screen_size[0]) / 2
+            self.board_offset_x = (self.screen_size[0] - self.screen_size[1]) / 2
             self.board_offset_y = self.square_spacing_size
             self.square_edge_size = (screen_size[1] - (self.square_spacing_size * 9)) / 8
+        # Scaling for if the screen is a rectangle, with the short side on the bottom
         else:
+            # Changing grid line size from 0 to -1 to align with expectations (There are wierd spacing bugs)
             if grid_lines_size == 0:
                 self.square_spacing_size = -1
+            # Calculating the grid line size with scale in mind
             else:
+                # (screen_size[0] / grid_lines_size): dividing the size of the screen by the grid_line_size (grid_line_size is how much percentage of the screen is border total (1 over grid_line_size). / 9: cutting the border into 9, since there will be 9 lines of border total
                 self.square_spacing_size = (screen_size[0] / grid_lines_size) / 9
             self.board_offset_x = self.square_spacing_size
-            self.board_offset_y = self.square_spacing_size - (self.screen_size[0] - self.screen_size[1]) / 2
+            self.board_offset_y = (self.screen_size[1] - self.screen_size[0]) / 2
             self.square_edge_size = (screen_size[0] - (self.square_spacing_size * 9)) / 8
         # Defining variables - creating a hashmap linking to loaded chess piece images
         self.piece_locations = {
@@ -840,9 +855,89 @@ class Display:
         pygame.init()
         pygame.display.init()
         # Initializing pygame modules - defining the screen surface
-        self.screen = pygame.display.set_mode(screen_size)
+        # Checking if the screen should be resizeable, if so calling the correct piece of code
+        if self.resizeable_display:
+            self.screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE)
+        else:
+            self.screen = pygame.display.set_mode(screen_size)
         pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"), (self.square_edge_size, self.square_edge_size))
         pygame.display.set_caption("Sticky Chess")
+
+
+    def recalculate_square_sizes(self):
+        # Scaling for if the screen size is a square
+        if self.screen_size[0] == self.screen_size[1]:
+            # Changing grid line size from 0 to -1 to align with expectations (There are wierd spacing bugs)
+            if self.grid_lines_size == 0:
+                self.square_spacing_size = -1
+            # Calculating the grid line size with scale in mind
+            else:
+                # (screen_size[0] / grid_lines_size): dividing the size of the screen by the grid_line_size (grid_line_size is how much percentage of the screen is border total (1 over grid_line_size). / 9: cutting the border into 9, since there will be 9 lines of border total
+                self.square_spacing_size = (self.screen_size[0] / grid_lines_size) / 9
+            self.board_offset_x = self.square_spacing_size
+            self.board_offset_y = self.square_spacing_size
+            self.square_edge_size = (self.screen_size[0] - (self.square_spacing_size * 9)) / 8
+        # Scaling for if the screen is a rectangle, with the long side on the bottom
+        elif self.screen_size[0] > self.screen_size[1]:
+            # Changing grid line size from 0 to -1 to align with expectations (There are wierd spacing bugs)
+            if self.grid_lines_size == 0:
+                self.square_spacing_size = -1
+            # Calculating the grid line size with scale in mind
+            else:
+                # (screen_size[0] / grid_lines_size): dividing the size of the screen by the grid_line_size (grid_line_size is how much percentage of the screen is border total (1 over grid_line_size). / 9: cutting the border into 9, since there will be 9 lines of border total
+                self.square_spacing_size = (self.screen_size[1] / grid_lines_size) / 9
+            self.board_offset_x = (self.screen_size[0] - self.screen_size[1]) / 2
+            self.board_offset_y = self.square_spacing_size
+            self.square_edge_size = (self.screen_size[1] - (self.square_spacing_size * 9)) / 8
+        # Scaling for if the screen is a rectangle, with the short side on the bottom
+        else:
+            # Changing grid line size from 0 to -1 to align with expectations (There are wierd spacing bugs)
+            if self.grid_lines_size == 0:
+                self.square_spacing_size = -1
+            # Calculating the grid line size with scale in mind
+            else:
+                # (screen_size[0] / grid_lines_size): dividing the size of the screen by the grid_line_size (grid_line_size is how much percentage of the screen is border total (1 over grid_line_size). / 9: cutting the border into 9, since there will be 9 lines of border total
+                self.square_spacing_size = (self.screen_size[0] / grid_lines_size) / 9
+            self.board_offset_x = self.square_spacing_size
+            self.board_offset_y = (self.screen_size[1] - self.screen_size[0]) / 2
+            self.square_edge_size = (self.screen_size[0] - (self.square_spacing_size * 9)) / 8
+        # Defining variables - creating a hashmap linking to loaded chess piece images
+        self.piece_locations = {
+            "black Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkPawn.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "black Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkBishop.png"),
+                                                   (self.square_edge_size, self.square_edge_size)),
+            "black Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKnight.png"),
+                                                   (self.square_edge_size, self.square_edge_size)),
+            "black Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkRook.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "black King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkKing.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "black Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/DarkQueen.png"),
+                                                  (self.square_edge_size, self.square_edge_size)),
+            "white Pawn": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightPawn.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "white Knight": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKnight.png"),
+                                                   (self.square_edge_size, self.square_edge_size)),
+            "white Bishop": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightBishop.png"),
+                                                   (self.square_edge_size, self.square_edge_size)),
+            "white Rook": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightRook.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "white King": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightKing.png"),
+                                                 (self.square_edge_size, self.square_edge_size)),
+            "white Queen": pygame.transform.scale(pygame.image.load("Chess_Piece_Images/LightQueen.png"),
+                                                  (self.square_edge_size, self.square_edge_size))}
+
+
+    def resize_display(self, X: int, Y: int):
+        # Checking if the screen should be resizeable, if so calling the correct piece of code
+        if self.resizeable_display:
+            self.screen = pygame.display.set_mode((X, Y), pygame.RESIZABLE)
+        else:
+            self.screen = pygame.display.set_mode((X, Y))
+        self.screen_size = (X, Y)
+        self.recalculate_square_sizes()
+
 
 
     def flip_viewing_angle(self):
@@ -921,6 +1016,8 @@ class Display:
             color_alternation = 1
         else:
             color_alternation = 0
+        # clearing the drawn squares list
+        self.drawn_background_squares = []
         # drawing all 64 squares
         for i in range(64):
             # simulating a snaking pattern
