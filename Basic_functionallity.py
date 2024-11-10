@@ -455,6 +455,8 @@ class Board:
         if not self.allow_king_blunders:
             for i in range(len(moves) - 1, -1, -1):
                 if moves[i][0] != "o":
+                    if self.get_square_value(moves[i])[0] == "King":
+                        continue
                     temp_position = self.create_instance_copy()
                     try:
                         temp_position.move(notation + moves[i])
