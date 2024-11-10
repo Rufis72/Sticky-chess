@@ -494,7 +494,7 @@ class Board:
         if piece == "Knight":
             moves = self.get_seeing_as_knight_at(notation)
         elif piece == "King":
-            moves = self.get_seeing_as_king_at(notation)
+            moves = self.get_seeing_as_king(notation)
         elif piece == "Rook":
             moves = self.get_seeing_as_rook_at(notation)
         elif piece == "Bishop":
