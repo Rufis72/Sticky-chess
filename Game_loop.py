@@ -79,10 +79,4 @@ while running:
     # updating the screen
     if running:
         display.update_screen(board, True)
-    # removing the possible moves circles if the piece is of the bots
-    if display.square_selected_one != None:
-        if full_bot_game or (play_vs_bot and ((board.get_square_value(display.board_notation[display.square_selected_one])[1] == "black" and bot_playing_vs_white) or (board.get_square_value(display.board_notation[display.square_selected_one])[1] == "white" and not bot_playing_vs_white))):
-            display.show_legal_moves_preview = False
-        else:
-            display.show_legal_moves_preview = True
 
