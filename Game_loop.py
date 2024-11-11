@@ -1,27 +1,26 @@
 from Basic_functionallity import Display, Board, Bot
 import pygame, pyperclip, random, time, threading, queue, sys
-# creating class instances
-board = Board(False, True)
-display = Display(screen_size=(800, 300), allow_moves_as_opposite_colored_player=True, if_view_from_whites_perspective=True)
-bot = Bot(3)
 # defining variables
 thread = None
 result_queue = queue.Queue()
 clock = pygame.time.Clock()
-flip_each_time = False
+flip_each_time: bool = False
 color_to_move = None
-play_vs_bot = False # for if playing against the bot
-full_bot_game = False # for a bot vs bot game
-bot_playing_vs_white = False # for the color you play if you play against the bot (True is bot = black)
-max_fps = 60
-running = True #the black queen is stopping king movement
+play_vs_bot: bool = True # for if playing against the bot
+full_bot_game: bool = False # for a bot vs bot game
+bot_playing_vs_white: bool = False # for the color you play if you play against the bot (True is bot = black)
+max_fps: int = 60
+running: bool = True #the black queen is stopping king movement
+# defining variables - creating class instances
+board = Board(False, True)
+display = Display(screen_size=(800, 300), allow_moves_as_opposite_colored_player=True, if_view_from_whites_perspective=True, show_legal_moves_preview=False)
+bot = Bot(3)
 # defining variables
 def get_best_move(board, bot, depth):
     global result_queue
     result_queue.put(bot.minimax(depth, board, board.who_to_move())[1][0])
 # actual game loop
 while running:
-    display.update_screen(board, True)
     pyperclip.copy(board.player_moves)
     clock.tick(max_fps)
     for event in pygame.event.get():
@@ -59,13 +58,11 @@ while running:
             # checking if the bot is playing as white or black, and checking if it's their turn to move
             if board.who_to_move() == "black" and bot_playing_vs_white:
                 # updating the screen (so the move just played will display)
-                display.update_screen(board, True)
                 # getting the move
                 thread = threading.Thread(target=get_best_move, args=(board, bot, 3))
                 thread.start()
             elif board.who_to_move() == "white" and not bot_playing_vs_white:
                 # updating the screen (so the move just played will display)
-                display.update_screen(board, True)
                 # getting the move
                 thread = threading.Thread(target=get_best_move, args=(board, bot, 3))
                 thread.start()
@@ -79,3 +76,13 @@ while running:
         board.legal_move(result_queue.get())
         thread.join()
         thread = None
+    # updating the screen
+    if running:
+        display.update_screen(board, True)
+    # removing the possible moves circles if the piece is of the bots
+    if display.square_selected_one != None:
+        if full_bot_game or (play_vs_bot and ((board.get_square_value(display.board_notation[display.square_selected_one])[1] == "black" and bot_playing_vs_white) or (board.get_square_value(display.board_notation[display.square_selected_one])[1] == "white" and not bot_playing_vs_white))):
+            display.show_legal_moves_preview = False
+        else:
+            display.show_legal_moves_preview = True
+

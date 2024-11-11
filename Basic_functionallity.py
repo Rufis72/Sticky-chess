@@ -1006,10 +1006,10 @@ class Display:
         return notation_moves
 
 
-    def setup_background_squares(self, show_legal_moves_preview: bool = False, board_class = None):
+    def setup_background_squares(self, board_class = None):
         """Draws all background squares"""
         # checking if anything needs to be passed in:
-        if show_legal_moves_preview and board_class == None:
+        if self.show_legal_moves_preview and board_class == None:
             raise Exception("If showing legal move previews, board_class needs to be passed in!")
         # changing the checkerboard pattern's colors to make each square the same color for all players
         if self.view_from_whites_perspective:
@@ -1034,7 +1034,7 @@ class Display:
             if i == self.square_selected_one:
                 pygame.draw.rect(self.screen, self.square_selection_color, pygame.Rect(((i % 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_x, (math.floor(i / 8) * (self.square_spacing_size + self.square_edge_size)) + self.board_offset_y, self.square_edge_size, self.square_edge_size), int(self.square_edge_size / 10))
             # showing any previews of legal moves (if parameter to do so is true)
-            if show_legal_moves_preview and self.square_selected_one != None:
+            if self.show_legal_moves_preview and self.square_selected_one != None:
                 moves = self.get_legal_moves_preview(board_class, self.square_selected_one)
                 # checking if the correct piece is moving, and is allowed to be moved by this player
                 if (self.allowed_moves_as_opposing_color or ((board_class.who_to_move() == "white" and self.view_from_whites_perspective) or (board_class.who_to_move() == "black" and not self.view_from_whites_perspective))) and board_class.who_to_move() == board_class.get_square_value(self.board_notation[self.square_selected_one])[1]:
@@ -1066,12 +1066,13 @@ class Display:
             board_class.board.reverse()
 
 
-    def update_screen(self, board_class, show_legal_moves_from_selected_piece: bool = False):
+    def update_screen(self, board_class, show_legal_moves_from_selected_piece: bool = False, move_via_click: bool = True):
         """Updates the screen"""
         self.draw_background()
-        self.setup_background_squares(show_legal_moves_from_selected_piece, board_class)
+        self.setup_background_squares(board_class)
         self.draw_pieces(board_class, self.view_from_whites_perspective)
-        self.move_via_click_check(board_class)
+        if move_via_click:
+            self.move_via_click_check(board_class)
         pygame.display.flip()
 
 
